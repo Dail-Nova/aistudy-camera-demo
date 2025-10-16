@@ -65,7 +65,7 @@
     .camera-controls {
       flex: 0 0 auto; /* 絶対に縮小しない */
       height: 150px; /* 固定高さ */
-      background: rgba(0,0,0,0.8);
+      background: transparent; /* 完全透明 */
       padding: 20px;
       text-align: center;
       position: relative;
@@ -77,9 +77,13 @@
     }
     
     .hint {
-      color: #999;
+      color: #fff;
       font-size: 12px;
       margin-bottom: 15px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* 視認性向上 */
+      background: rgba(0,0,0,0.6); /* ヒントテキストに背景 */
+      padding: 8px 12px;
+      border-radius: 4px;
     }
     
     #shutter-btn {
@@ -90,6 +94,7 @@
       border: 4px solid #333;
       cursor: pointer;
       transition: transform 0.1s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5); /* 影で浮き上がらせる */
     }
     
     #shutter-btn:active {
