@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>アイスタ カメラスキャン</title>
+  
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      overflow: hidden;
+      height: 100vh;
+      position: relative;
+    }
+    
+    /* 数式アニメーション背景 */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.1;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    
+    .formula {
+      position: absolute;
+      color: white;
+      font-size: 20px;
+      animation: float 20s linear infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+    
+    /* 画面共通スタイル */
+    .screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+    }
+    
+    .screen.hidden {
+      display: none;
+    }
+    
+    /* ヘッダー */
+    .header {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+    
+    /* カメラ撮影画面 */
+    #camera-screen {
+      background: black;
+    }
+    
+    #camera-preview {
+      width: 100%;
+      height: calc(100vh - 150px);
+      object-fit: cover;
+    }
+    
+    .camera-controls {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    #shutter-btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      border: 5px solid #00B900;
+      cursor: pointer;
+      transition: transform 0.1s;
+      font-size: 32px;
+    }
+    
+    #shutter-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .camera-hint {
+      color: rgba(255, 255, 255, 0.8);
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    /* プレビュー編集画面 */
+    #preview-screen {
+      background: #1a1a1a;
+    }
+    
+    .preview-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #preview-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    
+    #crop-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    
+    .crop-handle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #00B900;
+      border: 2px solid white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 10;
+    }
+    
+    /* ツールバー */
+    .toolbar {
+      background: rgba(0, 0, 0, 0.9);
+      padding: 15px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    
+    .toolbar button {
+      background: #00B900;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    
+    .toolbar button:active {
+      background: #009900;
+    }
+    
+    .brightness-control {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .brightness-control label {
+      color: white;
+      font-size: 12px;
+    }
+    
+    #brightness-slider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.3);
+      outline: none;
+      border-radius: 3px;
+    }
+    
+    #brightness-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #00B900;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    
+    #brightness-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #00B900;
+      cursor: pointer;
+      border-radius: 50%;
+      border: none;
+    }
+    
+    /* アクションボタン */
+    .action-buttons {
+      background: rgba(0, 0, 0, 0.9);
+      padding: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .action-buttons button {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    
+    #retake-btn {
+      background: #666;
+      color: white;
+    }
+    
+    #send-btn {
+      background: #00B900;
+      color: white;
+    }
+    
+    /* 処理中画面 */
+    #processing-screen {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      padding: 40px;
+    }
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .progress-info {
+      text-align: center;
+      color: white;
+    }
+    
+    .progress-info h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .progress-bar {
+      width: 280px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    
+    #progress-fill {
+      width: 0%;
+      height: 100%;
+      background: white;
+      transition: width 0.5s;
+    }
+    
+    .progress-text {
+      font-size: 14px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    
+    /* 完了画面 */
+    #complete-screen {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      animation: scaleIn 0.5s;
+    }
+    
+    @keyframes scaleIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    
+    .complete-message {
+      color: white;
+    }
+    
+    .complete-message h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+    
+    .complete-message p {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    
+    #back-to-line-btn {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s;
+    }
+    
+    #back-to-line-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* エラー画面 */
+    #error-screen {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .error-icon {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+    }
+    
+    .error-message {
+      color: white;
+    }
+    
+    .error-message h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+    
+    .error-message p {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    
+    #retry-btn {
+      background: white;
+      color: #f5576c;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    
+    /* デバッグ表示 */
+    #debug-info {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: #00ff00;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 9999;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景アニメーション -->
+  <div class="bg-animation" id="bg-animation"></div>
+  
+  <!-- カメラ撮影画面 -->
+  <div id="camera-screen" class="screen hidden">
+    <div class="header">
+      <h1>📸 カメラスキャン</h1>
+      <button class="close-btn" onclick="closeLiff()">×</button>
+    </div>
+    <video id="camera-preview" autoplay playsinline></video>
+    <div class="camera-controls">
+      <button id="shutter-btn">📸</button>
+      <div class="camera-hint">
+        💡 明るい場所で、真上から撮影すると<br>綺麗に読み取れます
+      </div>
+    </div>
+  </div>
+  
+  <!-- プレビュー編集画面 -->
+  <div id="preview-screen" class="screen hidden">
+    <div class="header">
+      <h1>📝 編集</h1>
+    </div>
+    <div class="preview-container">
+      <canvas id="preview-canvas"></canvas>
+      <div id="crop-overlay">
+        <div class="crop-handle" id="handle-tl" style="cursor: nwse-resize;"></div>
+        <div class="crop-handle" id="handle-tr" style="cursor: nesw-resize;"></div>
+        <div class="crop-handle" id="handle-bl" style="cursor: nesw-resize;"></div>
+        <div class="crop-handle" id="handle-br" style="cursor: nwse-resize;"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="rotate-btn">🔄 回転</button>
+      <div class="brightness-control">
+        <label>☀️ 明るさ</label>
+        <input type="range" id="brightness-slider" min="50" max="150" value="100">
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button id="retake-btn">🔄 撮り直す</button>
+      <button id="send-btn">✅ 送信</button>
+    </div>
+  </div>
+  
+  <!-- 処理中画面 -->
+  <div id="processing-screen" class="screen hidden">
+    <div class="spinner"></div>
+    <div class="progress-info">
+      <h2>⏳ AI解析中...</h2>
+      <div class="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
+      <p class="progress-text">
+        画像を解析しています<br>
+        20〜40秒ほどお待ちください
+      </p>
+    </div>
+  </div>
+  
+  <!-- 完了画面 -->
+  <div id="complete-screen" class="screen hidden">
+    <div class="success-icon">✅</div>
+    <div class="complete-message">
+      <h2>文字起こし完了!</h2>
+      <p>
+        結果はLINEトークで<br>
+        確認してください
+      </p>
+    </div>
+    <button id="back-to-line-btn">📱 LINEに戻る</button>
+  </div>
+  
+  <!-- エラー画面 -->
+  <div id="error-screen" class="screen hidden">
+    <div class="error-icon">❌</div>
+    <div class="error-message">
+      <h2 id="error-title">エラーが発生しました</h2>
+      <p id="error-detail">もう一度お試しください</p>
+    </div>
+    <button id="retry-btn">🔄 もう一度試す</button>
+  </div>
+  
+  <!-- デバッグ情報 -->
+  <div id="debug-info" class="hidden"></div>
+
+  <script>
+    // ========================================
+    // 設定
+    // ========================================
+    const LIFF_ID = '2008235357-XXXXXXXX';  // ← あなたのLIFF IDに変更してください
+    const WORKER_URL = 'https://aista-pdf-processor.luminalice-reg-tea-sun-red-9b0.workers.dev/upload-image';
+    const DEBUG_MODE = true;  // 本番: false
+    
+    // ========================================
+    // グローバル変数
+    // ========================================
+    let userId = null;
+    let displayName = null;
+    let cameraStream = null;
+    let originalCanvas = null;
+    let cropArea = null;
+    let rotation = 0;
+    let brightness = 1.0;
+    let needsRedraw = false;
+    
+    // ========================================
+    // デバッグログ
+    // ========================================
+    const debugLogs = [];
+    
+    function debugLog(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      const logMessage = `[${timestamp}] ${message}`;
+      debugLogs.push(logMessage);
+      console.log(logMessage);
+      
+      if (DEBUG_MODE) {
+        const debugDiv = document.getElementById('debug-info');
+        if (debugDiv) {
+          debugDiv.textContent = debugLogs.slice(-10).join('\n');
+          debugDiv.classList.remove('hidden');
+        }
+      }
+    }
+    
+    // ========================================
+    // 背景アニメーション
+    // ========================================
+    function initBackgroundAnimation() {
+      const formulas = ['∫', '∑', 'π', 'α', 'β', 'θ', '√', '∞', 'Δ', 'Σ'];
+      const container = document.getElementById('bg-animation');
+      
+      for (let i = 0; i < 15; i++) {
+        const formula = document.createElement('div');
+        formula.className = 'formula';
+        formula.textContent = formulas[Math.floor(Math.random() * formulas.length)];
+        formula.style.left = Math.random() * 100 + '%';
+        formula.style.animationDelay = Math.random() * 20 + 's';
+        formula.style.fontSize = (15 + Math.random() * 15) + 'px';
+        container.appendChild(formula);
+      }
+    }
+    
+    // ========================================
+    // 画面遷移
+    // ========================================
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+      document.getElementById(screenId).classList.remove('hidden');
+      debugLog(`画面表示: ${screenId}`);
+    }
+    
+    // ========================================
+    // LIFF初期化
+    // ========================================
+    async function initLiff() {
+      try {
+        debugLog('LIFF初期化開始...');
+        
+        await liff.init({ liffId: LIFF_ID });
+        debugLog('✅ LIFF初期化成功');
+        
+        if (!liff.isLoggedIn()) {
+          debugLog('未ログイン → ログイン実行');
+          liff.login();
+          return;
+        }
+        
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        displayName = profile.displayName;
+        debugLog(`✅ ユーザー情報取得: ${displayName} (${userId})`);
+        
+        // カメラ画面表示
+        showScreen('camera-screen');
+        await initCamera();
+        
+      } catch (error) {
+        debugLog(`❌ LIFF初期化エラー: ${error.message}`);
+        showError('LIFF初期化に失敗しました', error.message);
+      }
+    }
+    
+    // ========================================
+    // カメラ初期化
+    // ========================================
+    async function initCamera() {
+      try {
+        debugLog('カメラ初期化開始...');
+        
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('お使いの端末ではカメラ機能をご利用いただけません');
+        }
+        
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: false
+        });
+        
+        cameraStream = stream;
+        const video = document.getElementById('camera-preview');
+        video.srcObject = stream;
+        await video.play();
+        
+        debugLog('✅ カメラ起動成功');
+        
+      } catch (error) {
+        debugLog(`❌ カメラエラー: ${error.message}`);
+        
+        if (error.name === 'NotAllowedError') {
+          showError(
+            'カメラの使用許可が必要です',
+            '設定 → アプリ → LINE → 権限 → カメラをONにしてください'
+          );
+        } else {
+          showError('カメラの起動に失敗しました', error.message);
+        }
+      }
+    }
+    
+    // ========================================
+    // 撮影処理
+    // ========================================
+    document.getElementById('shutter-btn').addEventListener('click', () => {
+      try {
+        debugLog('撮影開始...');
+        
+        const video = document.getElementById('camera-preview');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        
+        originalCanvas = canvas;
+        
+        // カメラ停止
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+        }
+        
+        debugLog(`✅ 撮影完了 (${canvas.width}x${canvas.height})`);
+        
+        // プレビュー画面に遷移
+        showPreview();
+        
+      } catch (error) {
+        debugLog(`❌ 撮影エラー: ${error.message}`);
+        showError('撮影に失敗しました', error.message);
+      }
+    });
+    
+    // ========================================
+    // プレビュー表示
+    // ========================================
+    function showPreview() {
+      showScreen('preview-screen');
+      
+      const previewCanvas = document.getElementById('preview-canvas');
+      const container = previewCanvas.parentElement;
+      
+      // キャンバスサイズ調整(アスペクト比維持)
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const imageRatio = originalCanvas.width / originalCanvas.height;
+      const containerRatio = containerWidth / containerHeight;
+      
+      if (imageRatio > containerRatio) {
+        previewCanvas.width = containerWidth;
+        previewCanvas.height = containerWidth / imageRatio;
+      } else {
+        previewCanvas.height = containerHeight;
+        previewCanvas.width = containerHeight * imageRatio;
+      }
+      
+      // トリミング領域初期化
+      const margin = 0.1;
+      cropArea = {
+        x: previewCanvas.width * margin,
+        y: previewCanvas.height * margin,
+        width: previewCanvas.width * (1 - margin * 2),
+        height: previewCanvas.height * (1 - margin * 2)
+      };
+      
+      // 描画開始
+      redrawPreview();
+      startAnimationLoop();
+      
+      // トリミングハンドルイベント
+      initCropHandles();
+    }
+    
+    // ========================================
+    // プレビュー再描画
+    // ========================================
+    function redrawPreview() {
+      const canvas = document.getElementById('preview-canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // クリア
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 元画像を描画(明るさ適用)
+      ctx.filter = `brightness(${brightness})`;
+      
+      // 回転適用
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(rotation * Math.PI / 180);
+      
+      const scale = Math.min(
+        canvas.width / originalCanvas.width,
+        canvas.height / originalCanvas.height
+      );
+      
+      ctx.drawImage(
+        originalCanvas,
+        -originalCanvas.width * scale / 2,
+        -originalCanvas.height * scale / 2,
+        originalCanvas.width * scale,
+        originalCanvas.height * scale
+      );
+      
+      ctx.restore();
+      ctx.filter = 'none';
+      
+      // トリミング枠描画
+      drawCropArea(ctx);
+      
+      // ハンドル位置更新
+      updateCropHandles();
+    }
+    
+    // ========================================
+    // トリミング枠描画
+    // ========================================
+    function drawCropArea(ctx) {
+      // 半透明オーバーレイ
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      
+      // トリミング領域をクリア
+      ctx.clearRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      
+      // 枠線
+      ctx.strokeStyle = '#00B900';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 5]);
+      ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      ctx.setLineDash([]);
+    }
+    
+    // ========================================
+    // トリミングハンドル
+    // ========================================
+    function initCropHandles() {
+      const canvas = document.getElementById('preview-canvas');
+      let dragHandle = null;
+      let startX = 0;
+      let startY = 0;
+      
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        startX = x;
+        startY = y;
+        
+        // どのハンドルがタッチされたか判定
+        const threshold = 30;
+        if (isNear(x, y, cropArea.x, cropArea.y, threshold)) {
+          dragHandle = 'tl';
+        } else if (isNear(x, y, cropArea.x + cropArea.width, cropArea.y, threshold)) {
+          dragHandle = 'tr';
+        } else if (isNear(x, y, cropArea.x, cropArea.y + cropArea.height, threshold)) {
+          dragHandle = 'bl';
+        } else if (isNear(x, y, cropArea.x + cropArea.width, cropArea.y + cropArea.height, threshold)) {
+          dragHandle = 'br';
+        } else if (x > cropArea.x && x < cropArea.x + cropArea.width &&
+                   y > cropArea.y && y < cropArea.y + cropArea.height) {
+          dragHandle = 'move';
+        }
+      });
+      
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!dragHandle) return;
+        
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        const deltaX = x - startX;
+        const deltaY = y - startY;
+        
+        switch (dragHandle) {
+          case 'tl':
+            cropArea.x += deltaX;
+            cropArea.y += deltaY;
+            cropArea.width -= deltaX;
+            cropArea.height -= deltaY;
+            break;
+          case 'tr':
+            cropArea.y += deltaY;
+            cropArea.width += deltaX;
+            cropArea.height -= deltaY;
+            break;
+          case 'bl':
+            cropArea.x += deltaX;
+            cropArea.width -= deltaX;
+            cropArea.height += deltaY;
+            break;
+          case 'br':
+            cropArea.width += deltaX;
+            cropArea.height += deltaY;
+            break;
+          case 'move':
+            cropArea.x += deltaX;
+            cropArea.y += deltaY;
+            break;
+        }
+        
+        // 最小サイズ制限
+        cropArea.width = Math.max(50, cropArea.width);
+        cropArea.height = Math.max(50, cropArea.height);
+        
+        // 境界チェック
+        cropArea.x = Math.max(0, Math.min(cropArea.x, canvas.width - cropArea.width));
+        cropArea.y = Math.max(0, Math.min(cropArea.y, canvas.height - cropArea.height));
+        
+        startX = x;
+        startY = y;
+        
+        needsRedraw = true;
+      });
+      
+      canvas.addEventListener('touchend', () => {
+        dragHandle = null;
+      });
+    }
+    
+    function isNear(x, y, targetX, targetY, threshold) {
+      return Math.abs(x - targetX) < threshold && Math.abs(y - targetY) < threshold;
+    }
+    
+    function updateCropHandles() {
+      document.getElementById('handle-tl').style.left = cropArea.x + 'px';
+      document.getElementById('handle-tl').style.top = cropArea.y + 'px';
+      
+      document.getElementById('handle-tr').style.left = (cropArea.x + cropArea.width) + 'px';
+      document.getElementById('handle-tr').style.top = cropArea.y + 'px';
+      
+      document.getElementById('handle-bl').style.left = cropArea.x + 'px';
+      document.getElementById('handle-bl').style.top = (cropArea.y + cropArea.height) + 'px';
+      
+      document.getElementById('handle-br').style.left = (cropArea.x + cropArea.width) + 'px';
+      document.getElementById('handle-br').style.top = (cropArea.y + cropArea.height) + 'px';
+    }
+    
+    // ========================================
+    // アニメーションループ
+    // ========================================
+    function startAnimationLoop() {
+      function animate() {
+        if (needsRedraw) {
+          redrawPreview();
+          needsRedraw = false;
+        }
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+    
+    // ========================================
+    // 回転ボタン
+    // ========================================
+    document.getElementById('rotate-btn').addEventListener('click', () => {
+      rotation = (rotation + 90) % 360;
+      needsRedraw = true;
+      debugLog(`回転: ${rotation}度`);
+    });
+    
+    // ========================================
+    // 明るさ調整
+    // ========================================
+    document.getElementById('brightness-slider').addEventListener('input', (e) => {
+      brightness = parseInt(e.target.value) / 100;
+      needsRedraw = true;
+      debugLog(`明るさ: ${brightness}`);
+    });
+    
+    // ========================================
+    // 撮り直しボタン
+    // ========================================
+    document.getElementById('retake-btn').addEventListener('click', () => {
+      rotation = 0;
+      brightness = 1.0;
+      document.getElementById('brightness-slider').value = 100;
+      showScreen('camera-screen');
+      initCamera();
+    });
+    
+    // ========================================
+    // 送信処理
+    // ========================================
+    document.getElementById('send-btn').addEventListener('click', async () => {
+      try {
+        debugLog('送信処理開始...');
+        showScreen('processing-screen');
+        
+        // プログレスバー開始
+        updateProgress(10);
+        
+        // 最終画像生成
+        const finalCanvas = await generateFinalImage();
+        updateProgress(30);
+        
+        // Base64エンコード
+        const base64Data = await canvasToBase64(finalCanvas);
+        const imageSize = Math.round(base64Data.length * 0.75);
+        debugLog(`画像エンコード完了 (${(imageSize / 1024 / 1024).toFixed(2)}MB)`);
+        updateProgress(50);
+        
+        // アップロード
+        const response = await uploadImage({
+          userId,
+          displayName,
+          image: {
+            fileName: `scan_${Date.now()}.jpg`,
+            imageData: base64Data,
+            imageSize
+          }
+        });
+        
+        updateProgress(100);
+        
+        debugLog('✅ 送信成功');
+        
+        // 完了画面表示
+        setTimeout(() => {
+          showScreen('complete-screen');
+        }, 500);
+        
+      } catch (error) {
+        debugLog(`❌ 送信エラー: ${error.message}`);
+        showError('送信に失敗しました', error.message);
+      }
+    });
+    
+    // ========================================
+    // 最終画像生成
+    // ========================================
+    async function generateFinalImage() {
+      const canvas = document.getElementById('preview-canvas');
+      const finalCanvas = document.createElement('canvas');
+      
+      // トリミング適用
+      finalCanvas.width = cropArea.width;
+      finalCanvas.height = cropArea.height;
+      
+      const ctx = finalCanvas.getContext('2d');
+      ctx.filter = `brightness(${brightness})`;
+      
+      // 回転考慮して描画
+      ctx.save();
+      ctx.translate(finalCanvas.width / 2, finalCanvas.height / 2);
+      ctx.rotate(rotation * Math.PI / 180);
+      
+      const scale = Math.min(
+        canvas.width / originalCanvas.width,
+        canvas.height / originalCanvas.height
+      );
+      
+      // トリミング領域のみ抽出
+      const srcX = (cropArea.x - (canvas.width - originalCanvas.width * scale) / 2) / scale;
+      const srcY = (cropArea.y - (canvas.height - originalCanvas.height * scale) / 2) / scale;
+      const srcW = cropArea.width / scale;
+      const srcH = cropArea.height / scale;
+      
+      ctx.drawImage(
+        originalCanvas,
+        srcX, srcY, srcW, srcH,
+        -cropArea.width / 2, -cropArea.height / 2,
+        cropArea.width, cropArea.height
+      );
+      
+      ctx.restore();
+      
+      return finalCanvas;
+    }
+    
+    // ========================================
+    // Base64エンコード
+    // ========================================
+    function canvasToBase64(canvas, quality = 0.9) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Blob生成失敗'));
+            return;
+          }
+          
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }, 'image/jpeg', quality);
+      });
+    }
+    
+    // ========================================
+    // 画像アップロード
+    // ========================================
+    async function uploadImage(data) {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      return await response.json();
+    }
+    
+    // ========================================
+    // プログレスバー更新
+    // ========================================
+    function updateProgress(percent) {
+      document.getElementById('progress-fill').style.width = percent + '%';
+    }
+    
+    // ========================================
+    // エラー表示
+    // ========================================
+    function showError(title, detail) {
+      document.getElementById('error-title').textContent = title;
+      document.getElementById('error-detail').textContent = detail;
+      showScreen('error-screen');
+    }
+    
+    document.getElementById('retry-btn').addEventListener('click', () => {
+      showScreen('camera-screen');
+      initCamera();
+    });
+    
+    // ========================================
+    // LINEに戻る
+    // ========================================
+    document.getElementById('back-to-line-btn').addEventListener('click', () => {
+      closeLiff();
+    });
+    
+    function closeLiff() {
+      if (liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        window.close();
+      }
+    }
+    
+    // ========================================
+    // 初期化
+    // ========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      initBackgroundAnimation();
+      initLiff();
+    });
+  </script>
+</body>
+</html>
