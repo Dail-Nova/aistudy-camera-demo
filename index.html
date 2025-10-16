@@ -877,6 +877,11 @@
         
         debugLog(`画像エンコード完了 (${(imageSize / 1024 / 1024).toFixed(2)}MB)`);
         
+        // サイズチェック
+        if (imageSize > 10 * 1024 * 1024) {
+          throw new Error('画像サイズが大きすぎます（10MB以下にしてください）');
+        }
+        
         const fileName = `scan_${Date.now()}.jpg`;
         
         const requestData = {
@@ -890,6 +895,7 @@
         };
         
         debugLog(`Workers送信: ${WORKER_URL}`);
+        debugLog(`リクエストデータ: userId=${userId}, size=${(imageSize/1024/1024).toFixed(2)}MB`);
         
         const response = await fetch(WORKER_URL, {
           method: 'POST',
@@ -899,20 +905,56 @@
           body: JSON.stringify(requestData)
         });
         
+        // レスポンスボディを先に取得
+        const responseText = await response.text();
+        debugLog(`レスポンス受信: status=${response.status}`);
+        
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          // より詳細なエラーメッセージを取得
+          let errorDetail = response.statusText;
+          try {
+            const errorJson = JSON.parse(responseText);
+            if (errorJson.error) {
+              errorDetail = errorJson.error;
+            }
+          } catch (e) {
+            // JSONパース失敗時はresponseTextをそのまま使う
+            errorDetail = responseText || response.statusText;
+          }
+          
+          debugLog(`❌ エラー詳細: ${errorDetail}`);
+          throw new Error(errorDetail);
         }
         
-        const result = await response.json();
+        const result = JSON.parse(responseText);
         debugLog(`✅ 送信成功: ${JSON.stringify(result)}`);
         
         showScreen('complete-screen');
       } catch (error) {
         debugLog(`❌ 送信エラー: ${error.message}`);
-        showError(
-          '送信に失敗しました',
-          'ネットワーク接続を確認して、もう一度お試しください。\n\n' + error.message
-        );
+        
+        // エラーメッセージを分類
+        let errorTitle = '送信に失敗しました';
+        let errorMessage = error.message;
+        
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorTitle = 'ネットワークエラー';
+          errorMessage = 'インターネット接続を確認して、もう一度お試しください。';
+        } else if (error.message.includes('GEMINI_API_KEY')) {
+          errorTitle = '設定エラー';
+          errorMessage = 'サーバーの設定に問題があります。管理者にお問い合わせください。\n\n詳細: Gemini APIキーが未設定';
+        } else if (error.message.includes('LINE_CHANNEL_ACCESS_TOKEN')) {
+          errorTitle = '設定エラー';
+          errorMessage = 'サーバーの設定に問題があります。管理者にお問い合わせください。\n\n詳細: LINEトークンが未設定';
+        } else if (error.message.includes('Gemini Vision API Error')) {
+          errorTitle = 'AI処理エラー';
+          errorMessage = '画像の解析に失敗しました。\n\n• より明るい場所で撮影してください\n• ピントを合わせて撮影してください\n• もう一度お試しください';
+        } else if (error.message.includes('LINE API Error')) {
+          errorTitle = 'LINE通知エラー';
+          errorMessage = '処理は完了しましたが、LINEへの通知に失敗しました。';
+        }
+        
+        showError(errorTitle, errorMessage);
       }
     }
 
