@@ -4,10 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>アイスタ カメラスキャン</title>
-  
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * {
       margin: 0;
@@ -16,551 +13,344 @@
     }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
-      height: 100vh;
-      position: relative;
+      background: #000;
     }
     
-    /* 数式アニメーション背景 */
-    .bg-animation {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0.1;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    
-    .formula {
-      position: absolute;
-      color: white;
-      font-size: 20px;
-      animation: float 20s linear infinite;
-    }
-    
-    @keyframes float {
-      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-    }
-    
-    /* 画面共通スタイル */
     .screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      z-index: 1;
-    }
-    
-    .screen.hidden {
       display: none;
+      width: 100vw;
+      height: 100vh;
+      flex-direction: column;
     }
     
-    /* ヘッダー */
+    .screen.active {
+      display: flex;
+    }
+    
+    /* カメラ画面 */
+    #camera-screen {
+      background: #000;
+    }
+    
     .header {
       flex-shrink: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0,0,0,0.8);
       padding: 15px;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .header h1 {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    .close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      padding: 5px 10px;
-    }
-    
-    /* カメラ撮影画面 */
-    #camera-screen {
-      background: black;
-      display: flex;
-      flex-direction: column;
+      color: #fff;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
     }
     
     #camera-preview {
       flex: 1;
       width: 100%;
       object-fit: cover;
-      position: relative;
-      z-index: 1;
     }
     
     .camera-controls {
       flex-shrink: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0,0,0,0.8);
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
+      text-align: center;
       z-index: 100;
+    }
+    
+    .hint {
+      color: #999;
+      font-size: 12px;
+      margin-bottom: 15px;
     }
     
     #shutter-btn {
       width: 80px;
       height: 80px;
       border-radius: 50%;
-      background: white;
-      border: 5px solid #00B900;
+      background: #fff;
+      border: 4px solid #333;
       cursor: pointer;
       transition: transform 0.1s;
-      font-size: 32px;
     }
     
     #shutter-btn:active {
       transform: scale(0.95);
     }
     
-    .camera-hint {
-      color: rgba(255, 255, 255, 0.8);
-      text-align: center;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    
-    /* プレビュー編集画面 */
+    /* 編集画面 */
     #preview-screen {
-      background: #1a1a1a;
+      background: #222;
     }
     
     .preview-container {
       flex: 1;
-      position: relative;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      overflow: hidden;
     }
     
     #preview-canvas {
       max-width: 100%;
       max-height: 100%;
-      display: block;
       touch-action: none;
     }
     
-    #crop-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
+    .edit-controls {
+      flex-shrink: 0;
+      background: #1a1a1a;
+      padding: 20px;
     }
     
-    .crop-handle {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: #00B900;
-      border: 2px solid white;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: auto;
-      cursor: pointer;
-      z-index: 10;
+    .control-group {
+      margin-bottom: 20px;
     }
     
-    /* ツールバー */
-    .toolbar {
-      background: rgba(0, 0, 0, 0.9);
-      padding: 15px;
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      justify-content: space-around;
-      flex-wrap: wrap;
-    }
-    
-    .toolbar button {
-      background: #00B900;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
-      cursor: pointer;
+    .control-label {
+      color: #fff;
       font-size: 14px;
-      font-weight: 600;
-      transition: background 0.3s;
+      margin-bottom: 8px;
+      display: block;
     }
     
-    .toolbar button:active {
-      background: #009900;
-    }
-    
-    .brightness-control {
+    .slider-container {
       display: flex;
-      flex-direction: column;
-      gap: 5px;
-      flex: 1;
-      min-width: 150px;
-    }
-    
-    .brightness-control label {
-      color: white;
-      font-size: 12px;
+      align-items: center;
+      gap: 10px;
     }
     
     #brightness-slider {
-      width: 100%;
-      -webkit-appearance: none;
-      appearance: none;
+      flex: 1;
       height: 6px;
-      background: rgba(255, 255, 255, 0.3);
-      outline: none;
       border-radius: 3px;
+      background: #444;
+      outline: none;
+      -webkit-appearance: none;
     }
     
     #brightness-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      appearance: none;
       width: 20px;
       height: 20px;
-      background: #00B900;
-      cursor: pointer;
       border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
     }
     
-    #brightness-slider::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: #00B900;
-      cursor: pointer;
-      border-radius: 50%;
-      border: none;
+    #brightness-value {
+      color: #fff;
+      font-size: 14px;
+      min-width: 40px;
+      text-align: right;
     }
     
-    /* アクションボタン */
-    .action-buttons {
-      background: rgba(0, 0, 0, 0.9);
-      padding: 15px;
+    .button-group {
       display: flex;
       gap: 10px;
+      margin-bottom: 15px;
     }
     
-    .action-buttons button {
+    .btn {
       flex: 1;
-      padding: 15px;
+      padding: 12px;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
+      font-size: 14px;
       cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      transition: all 0.3s;
+      transition: opacity 0.2s;
     }
     
-    #retake-btn {
-      background: #666;
-      color: white;
+    .btn:active {
+      opacity: 0.7;
     }
     
-    #send-btn {
-      background: #00B900;
-      color: white;
+    .btn-secondary {
+      background: #444;
+      color: #fff;
+    }
+    
+    .btn-primary {
+      background: #06c755;
+      color: #fff;
+      font-weight: bold;
     }
     
     /* 処理中画面 */
     #processing-screen {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      flex-direction: column;
+      background: #fff;
       align-items: center;
       justify-content: center;
-      gap: 30px;
-      padding: 40px;
     }
     
     .spinner {
       width: 60px;
       height: 60px;
-      border: 5px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+      border: 4px solid #f0f0f0;
+      border-top-color: #06c755;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      margin-bottom: 20px;
     }
     
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
     
-    .progress-info {
-      text-align: center;
-      color: white;
-    }
-    
-    .progress-info h2 {
-      font-size: 24px;
+    .processing-text {
+      font-size: 16px;
+      color: #333;
       margin-bottom: 10px;
     }
     
-    .progress-bar {
-      width: 280px;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 20px 0;
-    }
-    
-    #progress-fill {
-      width: 0%;
-      height: 100%;
-      background: white;
-      transition: width 0.5s;
-    }
-    
-    .progress-text {
-      font-size: 14px;
-      opacity: 0.9;
-      line-height: 1.6;
+    .processing-hint {
+      font-size: 12px;
+      color: #999;
     }
     
     /* 完了画面 */
     #complete-screen {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      flex-direction: column;
+      background: #fff;
       align-items: center;
       justify-content: center;
-      gap: 30px;
-      padding: 40px;
-      text-align: center;
+      padding: 40px 20px;
     }
     
-    .success-icon {
-      width: 100px;
-      height: 100px;
-      background: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 50px;
-      animation: scaleIn 0.5s;
+    .complete-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
     }
     
-    @keyframes scaleIn {
-      from { transform: scale(0); }
-      to { transform: scale(1); }
+    .complete-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
     }
     
     .complete-message {
-      color: white;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
     }
     
-    .complete-message h2 {
-      font-size: 28px;
-      margin-bottom: 15px;
-    }
-    
-    .complete-message p {
-      font-size: 16px;
-      opacity: 0.9;
-      line-height: 1.6;
-    }
-    
-    #back-to-line-btn {
-      background: white;
-      color: #667eea;
+    .action-btn {
+      width: 200px;
+      padding: 15px;
       border: none;
-      padding: 18px 40px;
-      border-radius: 30px;
-      font-size: 18px;
-      font-weight: 700;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s;
     }
     
-    #back-to-line-btn:active {
-      transform: scale(0.95);
+    .action-btn-primary {
+      background: #06c755;
+      color: #fff;
+      font-weight: bold;
+      margin-bottom: 10px;
     }
     
     /* エラー画面 */
     #error-screen {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      display: flex;
-      flex-direction: column;
+      background: #fff;
       align-items: center;
       justify-content: center;
-      gap: 30px;
-      padding: 40px;
-      text-align: center;
+      padding: 40px 20px;
     }
     
     .error-icon {
-      width: 100px;
-      height: 100px;
-      background: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 50px;
+      font-size: 80px;
+      margin-bottom: 20px;
     }
     
-    .error-message {
-      color: white;
+    .error-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #e74c3c;
+      margin-bottom: 10px;
     }
     
-    .error-message h2 {
-      font-size: 24px;
-      margin-bottom: 15px;
-    }
-    
-    .error-message p {
-      font-size: 16px;
-      opacity: 0.9;
-      line-height: 1.6;
-    }
-    
-    #retry-btn {
-      background: white;
-      color: #f5576c;
-      border: none;
-      padding: 18px 40px;
-      border-radius: 30px;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    
-    /* デバッグ表示 */
-    #debug-info {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(0, 0, 0, 0.9);
-      color: #00ff00;
-      padding: 10px;
-      font-family: monospace;
-      font-size: 10px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 9999;
-      white-space: pre-wrap;
+    .error-detail {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 0 20px;
     }
   </style>
 </head>
 <body>
-  <!-- 背景アニメーション -->
-  <div class="bg-animation" id="bg-animation"></div>
-  
-  <!-- カメラ撮影画面 -->
-  <div id="camera-screen" class="screen hidden">
-    <div class="header">
-      <h1>📸 カメラスキャン</h1>
-      <button class="close-btn" onclick="closeLiff()">×</button>
-    </div>
+
+  <!-- カメラ画面 -->
+  <div id="camera-screen" class="screen">
+    <div class="header">📸 カメラスキャン</div>
     <video id="camera-preview" autoplay playsinline></video>
     <div class="camera-controls">
-      <button id="shutter-btn">📸</button>
-      <div class="camera-hint">
-        💡 明るい場所で、真上から撮影すると<br>綺麗に読み取れます
-      </div>
+      <div class="hint">📄 教科書・プリント・ノートを撮影してください</div>
+      <button id="shutter-btn"></button>
     </div>
   </div>
-  
-  <!-- プレビュー編集画面 -->
-  <div id="preview-screen" class="screen hidden">
-    <div class="header">
-      <h1>📝 編集</h1>
-    </div>
+
+  <!-- 編集画面 -->
+  <div id="preview-screen" class="screen">
+    <div class="header">✂️ 編集</div>
     <div class="preview-container">
       <canvas id="preview-canvas"></canvas>
-      <div id="crop-overlay">
-        <div class="crop-handle" id="handle-tl" style="cursor: nwse-resize;"></div>
-        <div class="crop-handle" id="handle-tr" style="cursor: nesw-resize;"></div>
-        <div class="crop-handle" id="handle-bl" style="cursor: nesw-resize;"></div>
-        <div class="crop-handle" id="handle-br" style="cursor: nwse-resize;"></div>
-      </div>
     </div>
-    <div class="toolbar">
-      <button id="rotate-btn">🔄 回転</button>
-      <div class="brightness-control">
-        <label>☀️ 明るさ</label>
-        <input type="range" id="brightness-slider" min="50" max="150" value="100">
+    <div class="edit-controls">
+      <div class="control-group">
+        <label class="control-label">明るさ</label>
+        <div class="slider-container">
+          <input type="range" id="brightness-slider" min="50" max="150" value="100">
+          <span id="brightness-value">100%</span>
+        </div>
       </div>
-    </div>
-    <div class="action-buttons">
-      <button id="retake-btn">🔄 撮り直す</button>
-      <button id="send-btn">✅ 送信</button>
+      <div class="button-group">
+        <button class="btn btn-secondary" id="rotate-btn">🔄 回転</button>
+        <button class="btn btn-secondary" id="retake-btn">📷 撮り直し</button>
+      </div>
+      <button class="btn btn-primary" id="send-btn">✅ この内容で送信</button>
     </div>
   </div>
-  
+
   <!-- 処理中画面 -->
-  <div id="processing-screen" class="screen hidden">
+  <div id="processing-screen" class="screen">
     <div class="spinner"></div>
-    <div class="progress-info">
-      <h2>⏳ AI解析中...</h2>
-      <div class="progress-bar">
-        <div id="progress-fill"></div>
-      </div>
-      <p class="progress-text">
-        画像を解析しています<br>
-        20〜40秒ほどお待ちください
-      </p>
-    </div>
+    <div class="processing-text">文字起こし中...</div>
+    <div class="processing-hint">20〜40秒ほどお待ちください</div>
   </div>
-  
+
   <!-- 完了画面 -->
-  <div id="complete-screen" class="screen hidden">
-    <div class="success-icon">✅</div>
+  <div id="complete-screen" class="screen">
+    <div class="complete-icon">✅</div>
+    <div class="complete-title">処理完了！</div>
     <div class="complete-message">
-      <h2>文字起こし完了!</h2>
-      <p>
-        結果はLINEトークで<br>
-        確認してください
-      </p>
+      文字起こし結果をLINEで送信しました。<br>
+      トークをご確認ください。
     </div>
-    <button id="back-to-line-btn">📱 LINEに戻る</button>
+    <button class="action-btn action-btn-primary" id="new-scan-btn">新しくスキャン</button>
   </div>
-  
+
   <!-- エラー画面 -->
-  <div id="error-screen" class="screen hidden">
+  <div id="error-screen" class="screen">
     <div class="error-icon">❌</div>
-    <div class="error-message">
-      <h2 id="error-title">エラーが発生しました</h2>
-      <p id="error-detail">もう一度お試しください</p>
-    </div>
-    <button id="retry-btn">🔄 もう一度試す</button>
+    <div class="error-title" id="error-title">エラーが発生しました</div>
+    <div class="error-detail" id="error-detail"></div>
+    <button class="action-btn action-btn-primary" id="retry-btn">もう一度試す</button>
   </div>
-  
-  <!-- デバッグ情報 -->
-  <div id="debug-info" class="hidden"></div>
 
   <script>
     // ========================================
     // 設定
     // ========================================
-    const LIFF_ID = '2008235357-XXXXXXXX';  // ← あなたのLIFF IDに変更してください
-    const WORKER_URL = 'https://aista-pdf-processor.luminalice-reg-tea-sun-red-9b0.workers.dev/upload-image';
-    const DEBUG_MODE = true;  // 本番: false
-    
+    const LIFF_ID = '2008304828-OnEyAwBm';
+    const WORKER_URL = 'https://aista-document-processor.luminalice-reg-tea-sun-red-9b0.workers.dev/upload-image';
+    const DEBUG_MODE = true;
+
     // ========================================
-    // グローバル変数
+    // 状態管理
     // ========================================
     let userId = null;
     let displayName = null;
@@ -569,70 +359,47 @@
     let cropArea = null;
     let rotation = 0;
     let brightness = 1.0;
-    let needsRedraw = false;
+    let isDragging = false;
+    let dragTarget = null;
+    let dragStartX = 0;
+    let dragStartY = 0;
     let cameraInitialized = false;
-    
+
     // ========================================
-    // デバッグログ
+    // ユーティリティ
     // ========================================
-    const debugLogs = [];
-    
     function debugLog(message) {
-      const timestamp = new Date().toLocaleTimeString();
-      const logMessage = `[${timestamp}] ${message}`;
-      debugLogs.push(logMessage);
-      console.log(logMessage);
-      
       if (DEBUG_MODE) {
-        const debugDiv = document.getElementById('debug-info');
-        if (debugDiv) {
-          debugDiv.textContent = debugLogs.slice(-10).join('\n');
-          debugDiv.classList.remove('hidden');
-        }
+        const timestamp = new Date().toLocaleTimeString('ja-JP');
+        console.log(`[${timestamp}] ${message}`);
       }
     }
-    
-    // ========================================
-    // 背景アニメーション
-    // ========================================
-    function initBackgroundAnimation() {
-      const formulas = ['∫', '∑', 'π', 'α', 'β', 'θ', '√', '∞', '∆', 'Σ'];
-      const container = document.getElementById('bg-animation');
-      
-      for (let i = 0; i < 15; i++) {
-        const formula = document.createElement('div');
-        formula.className = 'formula';
-        formula.textContent = formulas[Math.floor(Math.random() * formulas.length)];
-        formula.style.left = Math.random() * 100 + '%';
-        formula.style.animationDelay = Math.random() * 20 + 's';
-        formula.style.fontSize = (15 + Math.random() * 15) + 'px';
-        container.appendChild(formula);
-      }
-    }
-    
-    // ========================================
-    // 画面遷移
-    // ========================================
+
     function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-      document.getElementById(screenId).classList.remove('hidden');
-      debugLog(`画面表示: ${screenId}`);
+      debugLog(`画面遷移: ${screenId}`);
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
     }
-    
+
+    function showError(title, detail) {
+      debugLog(`エラー表示: ${title} - ${detail}`);
+      document.getElementById('error-title').textContent = title;
+      document.getElementById('error-detail').textContent = detail;
+      showScreen('error-screen');
+    }
+
     // ========================================
-    // LIFF初期化
+    // STEP 2: LIFF初期化
     // ========================================
     async function initLiff() {
       try {
         debugLog('LIFF初期化開始...');
-        
         await liff.init({ liffId: LIFF_ID });
-        debugLog('✅ LIFF初期化成功');
         
         if (!liff.isLoggedIn()) {
           debugLog('未ログイン → ログイン実行');
           liff.login();
-          return;
+          return false;
         }
         
         const profile = await liff.getProfile();
@@ -640,69 +407,73 @@
         displayName = profile.displayName;
         debugLog(`✅ ユーザー情報取得: ${displayName} (${userId})`);
         
-        // カメラ画面表示
-        showScreen('camera-screen');
-        
-        // カメラ初期化は1度だけ
-        if (!cameraInitialized) {
-          await initCamera();
-          cameraInitialized = true;
-        }
-        
+        return true;
       } catch (error) {
         debugLog(`❌ LIFF初期化エラー: ${error.message}`);
-        showError('LIFF初期化に失敗しました', error.message);
+        showError('LIFF初期化エラー', 'LINEからアクセスしてください。');
+        return false;
       }
     }
-    
+
     // ========================================
-    // カメラ初期化
+    // STEP 3: カメラ起動
     // ========================================
     async function initCamera() {
+      if (cameraInitialized) {
+        debugLog('カメラ既に初期化済み');
+        return;
+      }
+      
       try {
         debugLog('カメラ初期化開始...');
-        
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('お使いの端末ではカメラ機能をご利用いただけません');
-        }
-        
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment',
             width: { ideal: 1920 },
             height: { ideal: 1080 }
-          },
-          audio: false
+          }
         });
         
         cameraStream = stream;
         const video = document.getElementById('camera-preview');
         video.srcObject = stream;
-        await video.play();
+        cameraInitialized = true;
         
         debugLog('✅ カメラ起動成功');
-        
       } catch (error) {
         debugLog(`❌ カメラエラー: ${error.message}`);
         
         if (error.name === 'NotAllowedError') {
           showError(
             'カメラの使用許可が必要です',
-            '設定 → アプリ → LINE → 権限 → カメラをONにしてください'
+            '設定からカメラへのアクセスを許可してください。'
+          );
+        } else if (error.name === 'NotFoundError') {
+          showError(
+            'カメラが見つかりません',
+            'お使いの端末ではカメラ機能をご利用いただけません。'
           );
         } else {
-          showError('カメラの起動に失敗しました', error.message);
+          showError('カメラエラー', error.message);
         }
       }
     }
-    
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+        cameraInitialized = false;
+        debugLog('カメラ停止');
+      }
+    }
+
     // ========================================
-    // 撮影処理
+    // STEP 4: 撮影
     // ========================================
-    document.getElementById('shutter-btn').addEventListener('click', () => {
+    function capturePhoto() {
       try {
         debugLog('撮影開始...');
-        
         const video = document.getElementById('camera-preview');
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
@@ -712,450 +483,354 @@
         ctx.drawImage(video, 0, 0);
         
         originalCanvas = canvas;
-        
-        // カメラ停止
-        if (cameraStream) {
-          cameraStream.getTracks().forEach(track => track.stop());
-          cameraStream = null;
-        }
-        
         debugLog(`✅ 撮影完了 (${canvas.width}x${canvas.height})`);
         
-        // プレビュー画面に遷移
+        stopCamera();
         showPreview();
-        
       } catch (error) {
         debugLog(`❌ 撮影エラー: ${error.message}`);
-        showError('撮影に失敗しました', error.message);
+        showError('撮影エラー', 'もう一度お試しください。');
       }
-    });
-    
+    }
+
     // ========================================
-    // プレビュー表示
+    // STEP 5: プレビュー表示
     // ========================================
     function showPreview() {
       showScreen('preview-screen');
       
       const previewCanvas = document.getElementById('preview-canvas');
-      const container = previewCanvas.parentElement;
+      const maxWidth = window.innerWidth;
+      const maxHeight = window.innerHeight * 0.5;
       
-      // キャンバスサイズ調整(アスペクト比維持)
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      const imageRatio = originalCanvas.width / originalCanvas.height;
-      const containerRatio = containerWidth / containerHeight;
+      const scale = Math.min(
+        maxWidth / originalCanvas.width,
+        maxHeight / originalCanvas.height
+      );
       
-      if (imageRatio > containerRatio) {
-        previewCanvas.width = containerWidth;
-        previewCanvas.height = containerWidth / imageRatio;
-      } else {
-        previewCanvas.height = containerHeight;
-        previewCanvas.width = containerHeight * imageRatio;
-      }
+      previewCanvas.width = originalCanvas.width * scale;
+      previewCanvas.height = originalCanvas.height * scale;
       
-      // トリミング領域初期化
-      const margin = 0.1;
+      // トリミング枠初期化
       cropArea = {
-        x: previewCanvas.width * margin,
-        y: previewCanvas.height * margin,
-        width: previewCanvas.width * (1 - margin * 2),
-        height: previewCanvas.height * (1 - margin * 2)
+        x: previewCanvas.width * 0.1,
+        y: previewCanvas.height * 0.1,
+        width: previewCanvas.width * 0.8,
+        height: previewCanvas.height * 0.8
       };
       
-      // 描画開始
-      redrawPreview();
-      startAnimationLoop();
+      rotation = 0;
+      brightness = 1.0;
       
-      // トリミングハンドルイベント
-      initCropHandles();
+      redrawPreview();
+      debugLog('プレビュー表示完了');
     }
-    
+
     // ========================================
-    // プレビュー再描画
+    // STEP 6-7: 画像編集（明るさ・回転）
     // ========================================
     function redrawPreview() {
       const canvas = document.getElementById('preview-canvas');
       const ctx = canvas.getContext('2d');
       
-      // クリア
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
       
-      // 元画像を描画(明るさ適用)
+      // 回転
+      if (rotation !== 0) {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+      }
+      
+      // 明るさ
       ctx.filter = `brightness(${brightness})`;
       
-      // 回転適用
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(rotation * Math.PI / 180);
-      
-      const scale = Math.min(
-        canvas.width / originalCanvas.width,
-        canvas.height / originalCanvas.height
-      );
-      
-      ctx.drawImage(
-        originalCanvas,
-        -originalCanvas.width * scale / 2,
-        -originalCanvas.height * scale / 2,
-        originalCanvas.width * scale,
-        originalCanvas.height * scale
-      );
-      
+      // 画像描画
+      ctx.drawImage(originalCanvas, 0, 0, canvas.width, canvas.height);
       ctx.restore();
-      ctx.filter = 'none';
       
       // トリミング枠描画
       drawCropArea(ctx);
-      
-      // ハンドル位置更新
-      updateCropHandles();
     }
-    
+
     // ========================================
-    // トリミング枠描画
+    // STEP 8: トリミング枠描画
     // ========================================
     function drawCropArea(ctx) {
+      const { x, y, width, height } = cropArea;
+      
       // 半透明オーバーレイ
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       
-      // トリミング領域をクリア
-      ctx.clearRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      // 選択範囲をクリア
+      ctx.clearRect(x, y, width, height);
       
       // 枠線
-      ctx.strokeStyle = '#00B900';
+      ctx.strokeStyle = '#06c755';
       ctx.lineWidth = 2;
-      ctx.setLineDash([10, 5]);
-      ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
-      ctx.setLineDash([]);
-    }
-    
-    // ========================================
-    // トリミングハンドル
-    // ========================================
-    function initCropHandles() {
-      const canvas = document.getElementById('preview-canvas');
-      let dragHandle = null;
-      let startX = 0;
-      let startY = 0;
+      ctx.strokeRect(x, y, width, height);
       
-      canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        startX = x;
-        startY = y;
-        
-        // どのハンドルがタッチされたか判定
-        const threshold = 30;
-        if (isNear(x, y, cropArea.x, cropArea.y, threshold)) {
-          dragHandle = 'tl';
-        } else if (isNear(x, y, cropArea.x + cropArea.width, cropArea.y, threshold)) {
-          dragHandle = 'tr';
-        } else if (isNear(x, y, cropArea.x, cropArea.y + cropArea.height, threshold)) {
-          dragHandle = 'bl';
-        } else if (isNear(x, y, cropArea.x + cropArea.width, cropArea.y + cropArea.height, threshold)) {
-          dragHandle = 'br';
-        } else if (x > cropArea.x && x < cropArea.x + cropArea.width &&
-                   y > cropArea.y && y < cropArea.y + cropArea.height) {
-          dragHandle = 'move';
+      // ハンドル（4隅）
+      const handleSize = 20;
+      ctx.fillStyle = '#06c755';
+      
+      // 左上
+      ctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
+      // 右上
+      ctx.fillRect(x + width - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
+      // 左下
+      ctx.fillRect(x - handleSize / 2, y + height - handleSize / 2, handleSize, handleSize);
+      // 右下
+      ctx.fillRect(x + width - handleSize / 2, y + height - handleSize / 2, handleSize, handleSize);
+    }
+
+    // ========================================
+    // STEP 9: トリミング操作
+    // ========================================
+    function getTouchPos(canvas, touch) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    }
+
+    function getHandleAt(x, y) {
+      const handleSize = 20;
+      const handles = [
+        { name: 'tl', x: cropArea.x, y: cropArea.y },
+        { name: 'tr', x: cropArea.x + cropArea.width, y: cropArea.y },
+        { name: 'bl', x: cropArea.x, y: cropArea.y + cropArea.height },
+        { name: 'br', x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }
+      ];
+      
+      for (const handle of handles) {
+        if (Math.abs(x - handle.x) < handleSize && Math.abs(y - handle.y) < handleSize) {
+          return handle.name;
         }
-      });
-      
-      canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (!dragHandle) return;
-        
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        const deltaX = x - startX;
-        const deltaY = y - startY;
-        
-        switch (dragHandle) {
-          case 'tl':
-            cropArea.x += deltaX;
-            cropArea.y += deltaY;
-            cropArea.width -= deltaX;
-            cropArea.height -= deltaY;
-            break;
-          case 'tr':
-            cropArea.y += deltaY;
-            cropArea.width += deltaX;
-            cropArea.height -= deltaY;
-            break;
-          case 'bl':
-            cropArea.x += deltaX;
-            cropArea.width -= deltaX;
-            cropArea.height += deltaY;
-            break;
-          case 'br':
-            cropArea.width += deltaX;
-            cropArea.height += deltaY;
-            break;
-          case 'move':
-            cropArea.x += deltaX;
-            cropArea.y += deltaY;
-            break;
-        }
-        
-        // 最小サイズ制限
-        cropArea.width = Math.max(50, cropArea.width);
-        cropArea.height = Math.max(50, cropArea.height);
-        
-        // 境界チェック
-        cropArea.x = Math.max(0, Math.min(cropArea.x, canvas.width - cropArea.width));
-        cropArea.y = Math.max(0, Math.min(cropArea.y, canvas.height - cropArea.height));
-        
-        startX = x;
-        startY = y;
-        
-        needsRedraw = true;
-      });
-      
-      canvas.addEventListener('touchend', () => {
-        dragHandle = null;
-      });
-    }
-    
-    function isNear(x, y, targetX, targetY, threshold) {
-      return Math.abs(x - targetX) < threshold && Math.abs(y - targetY) < threshold;
-    }
-    
-    function updateCropHandles() {
-      document.getElementById('handle-tl').style.left = cropArea.x + 'px';
-      document.getElementById('handle-tl').style.top = cropArea.y + 'px';
-      
-      document.getElementById('handle-tr').style.left = (cropArea.x + cropArea.width) + 'px';
-      document.getElementById('handle-tr').style.top = cropArea.y + 'px';
-      
-      document.getElementById('handle-bl').style.left = cropArea.x + 'px';
-      document.getElementById('handle-bl').style.top = (cropArea.y + cropArea.height) + 'px';
-      
-      document.getElementById('handle-br').style.left = (cropArea.x + cropArea.width) + 'px';
-      document.getElementById('handle-br').style.top = (cropArea.y + cropArea.height) + 'px';
-    }
-    
-    // ========================================
-    // アニメーションループ
-    // ========================================
-    function startAnimationLoop() {
-      function animate() {
-        if (needsRedraw) {
-          redrawPreview();
-          needsRedraw = false;
-        }
-        requestAnimationFrame(animate);
       }
-      animate();
+      
+      // 枠内かチェック
+      if (x >= cropArea.x && x <= cropArea.x + cropArea.width &&
+          y >= cropArea.y && y <= cropArea.y + cropArea.height) {
+        return 'move';
+      }
+      
+      return null;
     }
-    
-    // ========================================
-    // 回転ボタン
-    // ========================================
-    document.getElementById('rotate-btn').addEventListener('click', () => {
-      rotation = (rotation + 90) % 360;
-      needsRedraw = true;
-      debugLog(`回転: ${rotation}度`);
-    });
-    
-    // ========================================
-    // 明るさ調整
-    // ========================================
-    document.getElementById('brightness-slider').addEventListener('input', (e) => {
-      brightness = parseInt(e.target.value) / 100;
-      needsRedraw = true;
-      debugLog(`明るさ: ${brightness}`);
-    });
-    
-    // ========================================
-    // 撮り直しボタン
-    // ========================================
-    document.getElementById('retake-btn').addEventListener('click', () => {
-      rotation = 0;
-      brightness = 1.0;
-      document.getElementById('brightness-slider').value = 100;
-      cameraInitialized = false;  // カメラ再初期化を許可
-      showScreen('camera-screen');
-      initCamera();
-    });
-    
-    // ========================================
-    // 送信処理
-    // ========================================
-    document.getElementById('send-btn').addEventListener('click', async () => {
-      try {
-        debugLog('送信処理開始...');
-        showScreen('processing-screen');
-        
-        // プログレスバー開始
-        updateProgress(10);
-        
-        // 最終画像生成
-        const finalCanvas = await generateFinalImage();
-        updateProgress(30);
-        
-        // Base64エンコード
-        const base64Data = await canvasToBase64(finalCanvas);
-        const imageSize = Math.round(base64Data.length * 0.75);
-        debugLog(`画像エンコード完了 (${(imageSize / 1024 / 1024).toFixed(2)}MB)`);
-        updateProgress(50);
-        
-        // アップロード
-        const response = await uploadImage({
-          userId,
-          displayName,
-          image: {
-            fileName: `scan_${Date.now()}.jpg`,
-            imageData: base64Data,
-            imageSize
-          }
-        });
-        
-        updateProgress(100);
-        
-        debugLog('✅ 送信成功');
-        
-        // 完了画面表示
-        setTimeout(() => {
-          showScreen('complete-screen');
-        }, 500);
-        
-      } catch (error) {
-        debugLog(`❌ 送信エラー: ${error.message}`);
-        showError('送信に失敗しました', error.message);
+
+    document.getElementById('preview-canvas').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const canvas = e.target;
+      const touch = e.touches[0];
+      const pos = getTouchPos(canvas, touch);
+      
+      dragTarget = getHandleAt(pos.x, pos.y);
+      if (dragTarget) {
+        isDragging = true;
+        dragStartX = pos.x;
+        dragStartY = pos.y;
       }
     });
-    
+
+    document.getElementById('preview-canvas').addEventListener('touchmove', (e) => {
+      if (!isDragging || !dragTarget) return;
+      e.preventDefault();
+      
+      const canvas = e.target;
+      const touch = e.touches[0];
+      const pos = getTouchPos(canvas, touch);
+      
+      const dx = pos.x - dragStartX;
+      const dy = pos.y - dragStartY;
+      
+      const minSize = 50;
+      
+      if (dragTarget === 'move') {
+        // 枠全体を移動
+        cropArea.x = Math.max(0, Math.min(canvas.width - cropArea.width, cropArea.x + dx));
+        cropArea.y = Math.max(0, Math.min(canvas.height - cropArea.height, cropArea.y + dy));
+      } else if (dragTarget === 'tl') {
+        const newX = Math.min(cropArea.x + cropArea.width - minSize, cropArea.x + dx);
+        const newY = Math.min(cropArea.y + cropArea.height - minSize, cropArea.y + dy);
+        cropArea.width += cropArea.x - newX;
+        cropArea.height += cropArea.y - newY;
+        cropArea.x = Math.max(0, newX);
+        cropArea.y = Math.max(0, newY);
+      } else if (dragTarget === 'tr') {
+        const newWidth = Math.max(minSize, cropArea.width + dx);
+        const newY = Math.min(cropArea.y + cropArea.height - minSize, cropArea.y + dy);
+        cropArea.width = Math.min(canvas.width - cropArea.x, newWidth);
+        cropArea.height += cropArea.y - newY;
+        cropArea.y = Math.max(0, newY);
+      } else if (dragTarget === 'bl') {
+        const newX = Math.min(cropArea.x + cropArea.width - minSize, cropArea.x + dx);
+        const newHeight = Math.max(minSize, cropArea.height + dy);
+        cropArea.width += cropArea.x - newX;
+        cropArea.x = Math.max(0, newX);
+        cropArea.height = Math.min(canvas.height - cropArea.y, newHeight);
+      } else if (dragTarget === 'br') {
+        cropArea.width = Math.max(minSize, Math.min(canvas.width - cropArea.x, cropArea.width + dx));
+        cropArea.height = Math.max(minSize, Math.min(canvas.height - cropArea.y, cropArea.height + dy));
+      }
+      
+      dragStartX = pos.x;
+      dragStartY = pos.y;
+      
+      redrawPreview();
+    });
+
+    document.getElementById('preview-canvas').addEventListener('touchend', () => {
+      isDragging = false;
+      dragTarget = null;
+    });
+
     // ========================================
-    // 最終画像生成
+    // STEP 10: 画像送信
     // ========================================
-    async function generateFinalImage() {
-      const canvas = document.getElementById('preview-canvas');
+    function generateFinalImage() {
+      debugLog('最終画像生成開始...');
+      
+      const previewCanvas = document.getElementById('preview-canvas');
+      const scale = originalCanvas.width / previewCanvas.width;
+      
+      // 実際のピクセル座標に変換
+      const actualCrop = {
+        x: cropArea.x * scale,
+        y: cropArea.y * scale,
+        width: cropArea.width * scale,
+        height: cropArea.height * scale
+      };
+      
       const finalCanvas = document.createElement('canvas');
-      
-      // トリミング適用
-      finalCanvas.width = cropArea.width;
-      finalCanvas.height = cropArea.height;
+      finalCanvas.width = actualCrop.width;
+      finalCanvas.height = actualCrop.height;
       
       const ctx = finalCanvas.getContext('2d');
       ctx.filter = `brightness(${brightness})`;
       
-      // 回転考慮して描画
-      ctx.save();
-      ctx.translate(finalCanvas.width / 2, finalCanvas.height / 2);
-      ctx.rotate(rotation * Math.PI / 180);
-      
-      const scale = Math.min(
-        canvas.width / originalCanvas.width,
-        canvas.height / originalCanvas.height
-      );
-      
-      // トリミング領域のみ抽出
-      const srcX = (cropArea.x - (canvas.width - originalCanvas.width * scale) / 2) / scale;
-      const srcY = (cropArea.y - (canvas.height - originalCanvas.height * scale) / 2) / scale;
-      const srcW = cropArea.width / scale;
-      const srcH = cropArea.height / scale;
-      
+      // トリミング + 明るさ適用
       ctx.drawImage(
         originalCanvas,
-        srcX, srcY, srcW, srcH,
-        -cropArea.width / 2, -cropArea.height / 2,
-        cropArea.width, cropArea.height
+        actualCrop.x, actualCrop.y, actualCrop.width, actualCrop.height,
+        0, 0, actualCrop.width, actualCrop.height
       );
       
-      ctx.restore();
-      
+      debugLog(`最終画像サイズ: ${finalCanvas.width}x${finalCanvas.height}`);
       return finalCanvas;
     }
-    
-    // ========================================
-    // Base64エンコード
-    // ========================================
+
     function canvasToBase64(canvas, quality = 0.9) {
-      return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            reject(new Error('Blob生成失敗'));
-            return;
+      return canvas.toDataURL('image/jpeg', quality).split(',')[1];
+    }
+
+    async function uploadImage() {
+      try {
+        showScreen('processing-screen');
+        debugLog('送信処理開始...');
+        
+        const finalCanvas = generateFinalImage();
+        const base64Data = canvasToBase64(finalCanvas);
+        const imageSize = Math.round(base64Data.length * 0.75);
+        
+        debugLog(`画像エンコード完了 (${(imageSize / 1024 / 1024).toFixed(2)}MB)`);
+        
+        const fileName = `scan_${Date.now()}.jpg`;
+        
+        const requestData = {
+          userId,
+          displayName,
+          image: {
+            fileName,
+            imageData: base64Data,
+            imageSize
           }
-          
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        }, 'image/jpeg', quality);
-      });
-    }
-    
-    // ========================================
-    // 画像アップロード
-    // ========================================
-    async function uploadImage(data) {
-      const response = await fetch(WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        };
+        
+        debugLog(`Workers送信: ${WORKER_URL}`);
+        
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        debugLog(`✅ 送信成功: ${JSON.stringify(result)}`);
+        
+        showScreen('complete-screen');
+      } catch (error) {
+        debugLog(`❌ 送信エラー: ${error.message}`);
+        showError(
+          '送信に失敗しました',
+          'ネットワーク接続を確認して、もう一度お試しください。\n\n' + error.message
+        );
       }
-      
-      return await response.json();
     }
+
+    // ========================================
+    // イベントリスナー
+    // ========================================
     
-    // ========================================
-    // プログレスバー更新
-    // ========================================
-    function updateProgress(percent) {
-      document.getElementById('progress-fill').style.width = percent + '%';
-    }
-    
-    // ========================================
-    // エラー表示
-    // ========================================
-    function showError(title, detail) {
-      document.getElementById('error-title').textContent = title;
-      document.getElementById('error-detail').textContent = detail;
-      showScreen('error-screen');
-    }
-    
-    document.getElementById('retry-btn').addEventListener('click', () => {
+    // 明るさスライダー
+    document.getElementById('brightness-slider').addEventListener('input', (e) => {
+      brightness = e.target.value / 100;
+      document.getElementById('brightness-value').textContent = e.target.value + '%';
+      redrawPreview();
+    });
+
+    // 回転ボタン
+    document.getElementById('rotate-btn').addEventListener('click', () => {
+      rotation = (rotation + 90) % 360;
+      debugLog(`回転: ${rotation}度`);
+      redrawPreview();
+    });
+
+    // 撮り直しボタン
+    document.getElementById('retake-btn').addEventListener('click', async () => {
       showScreen('camera-screen');
-      initCamera();
+      await initCamera();
     });
-    
-    // ========================================
-    // LINEに戻る
-    // ========================================
-    document.getElementById('back-to-line-btn').addEventListener('click', () => {
-      closeLiff();
+
+    // 送信ボタン
+    document.getElementById('send-btn').addEventListener('click', uploadImage);
+
+    // シャッターボタン
+    document.getElementById('shutter-btn').addEventListener('click', capturePhoto);
+
+    // 新しくスキャンボタン
+    document.getElementById('new-scan-btn').addEventListener('click', async () => {
+      showScreen('camera-screen');
+      await initCamera();
     });
-    
-    function closeLiff() {
-      if (liff.isInClient()) {
-        liff.closeWindow();
-      } else {
-        window.close();
-      }
-    }
-    
+
+    // リトライボタン
+    document.getElementById('retry-btn').addEventListener('click', async () => {
+      showScreen('camera-screen');
+      await initCamera();
+    });
+
     // ========================================
     // 初期化
     // ========================================
-    window.addEventListener('DOMContentLoaded', () => {
-      initBackgroundAnimation();
-      initLiff();
+    window.addEventListener('DOMContentLoaded', async () => {
+      debugLog('アプリ起動');
+      
+      const initialized = await initLiff();
+      if (!initialized) return;
+      
+      showScreen('camera-screen');
+      await initCamera();
     });
   </script>
+
 </body>
 </html>
