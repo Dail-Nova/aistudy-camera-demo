@@ -246,13 +246,8 @@
       padding: 40px 20px;
     }
     
-    .complete-icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-    }
-    
     .complete-title {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: bold;
       color: #333;
       margin-bottom: 10px;
@@ -289,13 +284,8 @@
       padding: 40px 20px;
     }
     
-    .error-icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-    }
-    
     .error-title {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: bold;
       color: #e74c3c;
       margin-bottom: 10px;
@@ -314,17 +304,17 @@
 
   <!-- カメラ画面 -->
   <div id="camera-screen" class="screen">
-    <div class="header">📸 カメラスキャン</div>
+    <div class="header">カメラスキャン</div>
     <video id="camera-preview" autoplay playsinline></video>
     <div class="camera-controls">
-      <div class="hint">📄 教科書・プリント・ノートを撮影してください</div>
+      <div class="hint">アイスタに聞きたい箇所を撮影してください。</div>
       <button id="shutter-btn"></button>
     </div>
   </div>
 
   <!-- 編集画面 -->
   <div id="preview-screen" class="screen">
-    <div class="header">✂️ 編集</div>
+    <div class="header">編集</div>
     <div class="preview-container">
       <canvas id="preview-canvas"></canvas>
     </div>
@@ -353,8 +343,7 @@
 
   <!-- 完了画面 -->
   <div id="complete-screen" class="screen">
-    <div class="complete-icon">✅</div>
-    <div class="complete-title">処理完了！</div>
+    <div class="complete-title">処理完了</div>
     <div class="complete-message">
       文字起こし結果をLINEで送信しました。<br>
       トークをご確認ください。
@@ -364,7 +353,6 @@
 
   <!-- エラー画面 -->
   <div id="error-screen" class="screen">
-    <div class="error-icon">❌</div>
     <div class="error-title" id="error-title">エラーが発生しました</div>
     <div class="error-detail" id="error-detail"></div>
     <button class="action-btn action-btn-primary" id="retry-btn">もう一度試す</button>
@@ -631,11 +619,33 @@
         originalCanvas = canvas;
         debugLog(`✅ 撮影完了 (${canvas.width}x${canvas.height})`);
         
+        // デバイスのアルバムに保存
+        saveToDevice(canvas);
+        
         // カメラストリームは停止しない（再利用のため）
         showPreview();
       } catch (error) {
         debugLog(`❌ 撮影エラー: ${error.message}`);
         showError('撮影エラー', 'もう一度お試しください。');
+      }
+    }
+    
+    function saveToDevice(canvas) {
+      try {
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `aista_scan_${Date.now()}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          debugLog('画像をデバイスに保存');
+        }, 'image/jpeg', 0.95);
+      } catch (error) {
+        debugLog(`保存エラー: ${error.message}`);
+        // 保存失敗しても処理は継続
       }
     }
 
