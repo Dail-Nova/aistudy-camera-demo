@@ -22,6 +22,7 @@
       display: none;
       width: 100vw;
       height: 100vh;
+      height: 100dvh; /* 動的ビューポート */
       flex-direction: column;
     }
     
@@ -32,30 +33,47 @@
     /* カメラ画面 */
     #camera-screen {
       background: #000;
+      position: relative;
     }
     
     .header {
-      flex-shrink: 0;
+      flex: 0 0 auto; /* 絶対に縮小しない */
+      height: 60px;
       background: rgba(0,0,0,0.8);
       padding: 15px;
       color: #fff;
       text-align: center;
       font-size: 16px;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
     }
     
     #camera-preview {
-      flex: 1;
+      flex: 1 1 auto;
       width: 100%;
+      min-height: 0;
+      max-height: calc(100vh - 210px); /* header(60px) + controls(150px) */
       object-fit: cover;
+      position: relative;
+      z-index: 1;
     }
     
     .camera-controls {
-      flex-shrink: 0;
+      flex: 0 0 auto; /* 絶対に縮小しない */
+      height: 150px; /* 固定高さ */
       background: rgba(0,0,0,0.8);
       padding: 20px;
       text-align: center;
+      position: relative;
       z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
     
     .hint {
@@ -364,6 +382,7 @@
     let dragStartX = 0;
     let dragStartY = 0;
     let cameraInitialized = false;
+    let cameraPermissionState = 'unchecked'; // 'unchecked' | 'granted' | 'denied'
 
     // ========================================
     // ユーティリティ
@@ -418,10 +437,51 @@
     // ========================================
     // STEP 3: カメラ起動
     // ========================================
+    async function checkCameraPermission() {
+      // Permissions APIで事前確認
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const result = await navigator.permissions.query({ name: 'camera' });
+          debugLog(`カメラ権限状態: ${result.state}`);
+          
+          if (result.state === 'granted') {
+            return 'granted';
+          } else if (result.state === 'denied') {
+            return 'denied';
+          }
+          return 'unchecked';
+        } catch (e) {
+          debugLog('Permissions API非対応');
+          return 'unchecked';
+        }
+      }
+      return 'unchecked';
+    }
+
     async function initCamera() {
-      if (cameraInitialized) {
-        debugLog('カメラ既に初期化済み');
+      // 既にストリームがある場合は再利用
+      if (cameraStream && cameraInitialized) {
+        debugLog('カメラストリーム再利用');
+        const video = document.getElementById('camera-preview');
+        video.srcObject = cameraStream;
         return;
+      }
+      
+      // 拒否状態の場合は案内画面のみ
+      if (cameraPermissionState === 'denied') {
+        debugLog('カメラ拒否済み - 案内表示');
+        showCameraPermissionGuide();
+        return;
+      }
+      
+      // 事前チェック（初回 or リトライ時）
+      if (cameraPermissionState === 'unchecked') {
+        const preCheckState = await checkCameraPermission();
+        if (preCheckState === 'denied') {
+          cameraPermissionState = 'denied';
+          showCameraPermissionGuide();
+          return;
+        }
       }
       
       try {
@@ -435,28 +495,103 @@
         });
         
         cameraStream = stream;
+        cameraPermissionState = 'granted';
+        cameraInitialized = true;
+        
         const video = document.getElementById('camera-preview');
         video.srcObject = stream;
-        cameraInitialized = true;
+        
+        // メタデータ読み込み後のデバッグ情報
+        video.addEventListener('loadedmetadata', () => {
+          debugLog(`Video size: ${video.videoWidth}x${video.videoHeight}`);
+          const controls = document.querySelector('.camera-controls');
+          const rect = controls.getBoundingClientRect();
+          debugLog(`Controls position: top=${rect.top}, bottom=${rect.bottom}`);
+          debugLog(`Controls visible: ${rect.bottom <= window.innerHeight}`);
+        }, { once: true });
         
         debugLog('✅ カメラ起動成功');
       } catch (error) {
-        debugLog(`❌ カメラエラー: ${error.message}`);
-        
-        if (error.name === 'NotAllowedError') {
-          showError(
-            'カメラの使用許可が必要です',
-            '設定からカメラへのアクセスを許可してください。'
-          );
-        } else if (error.name === 'NotFoundError') {
-          showError(
-            'カメラが見つかりません',
-            'お使いの端末ではカメラ機能をご利用いただけません。'
-          );
-        } else {
-          showError('カメラエラー', error.message);
-        }
+        handleCameraError(error);
       }
+    }
+
+    function handleCameraError(error) {
+      debugLog(`カメラエラー: ${error.name} - ${error.message}`);
+      
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        // 拒否された
+        cameraPermissionState = 'denied';
+        showCameraPermissionGuide();
+        
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        // カメラが見つからない
+        showError(
+          'カメラが見つかりません',
+          'お使いの端末にはカメラが搭載されていないか、接続されていません。'
+        );
+        
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        // カメラが他のアプリで使用中
+        showError(
+          'カメラにアクセスできません',
+          '他のアプリがカメラを使用している可能性があります。\n他のアプリを終了してから再度お試しください。'
+        );
+        
+      } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+        // 要求された条件を満たせない
+        debugLog('カメラ条件を緩和して再試行...');
+        retryWithLowerConstraints();
+        
+      } else {
+        // その他のエラー
+        showError('カメラエラー', error.message);
+      }
+    }
+
+    async function retryWithLowerConstraints() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true // 最小限の設定
+        });
+        cameraStream = stream;
+        cameraPermissionState = 'granted';
+        cameraInitialized = true;
+        document.getElementById('camera-preview').srcObject = stream;
+        debugLog('✅ カメラ起動成功（低画質モード）');
+      } catch (error) {
+        showError('カメラエラー', 'カメラを起動できませんでした。');
+      }
+    }
+
+    function showCameraPermissionGuide() {
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      let instructions = '';
+      if (isIOS) {
+        instructions = '【iOS設定方法】\n\n' +
+          '1. iPhoneの「設定」を開く\n' +
+          '2. 「LINE」を選択\n' +
+          '3. 「カメラ」をONにする\n' +
+          '4. LINEアプリに戻る\n' +
+          '5. 下のボタンを押す';
+      } else if (isAndroid) {
+        instructions = '【Android設定方法】\n\n' +
+          '1. 「設定」を開く\n' +
+          '2. 「アプリ」→「LINE」を選択\n' +
+          '3. 「権限」→「カメラ」を選択\n' +
+          '4. 「許可」を選択\n' +
+          '5. LINEアプリに戻る\n' +
+          '6. 下のボタンを押す';
+      } else {
+        instructions = 'ブラウザの設定でカメラへのアクセスを許可してください。';
+      }
+      
+      showError(
+        'カメラの使用許可が必要です',
+        instructions
+      );
     }
 
     function stopCamera() {
@@ -485,7 +620,7 @@
         originalCanvas = canvas;
         debugLog(`✅ 撮影完了 (${canvas.width}x${canvas.height})`);
         
-        stopCamera();
+        // カメラストリームは停止しない（再利用のため）
         showPreview();
       } catch (error) {
         debugLog(`❌ 撮影エラー: ${error.message}`);
@@ -797,7 +932,14 @@
     // 撮り直しボタン
     document.getElementById('retake-btn').addEventListener('click', async () => {
       showScreen('camera-screen');
-      await initCamera();
+      // ストリームは停止せず再利用
+      if (cameraStream && cameraInitialized) {
+        const video = document.getElementById('camera-preview');
+        video.srcObject = cameraStream;
+        debugLog('カメラストリーム再利用');
+      } else {
+        await initCamera();
+      }
     });
 
     // 送信ボタン
@@ -809,13 +951,31 @@
     // 新しくスキャンボタン
     document.getElementById('new-scan-btn').addEventListener('click', async () => {
       showScreen('camera-screen');
-      await initCamera();
+      // ストリームは停止せず再利用
+      if (cameraStream && cameraInitialized) {
+        const video = document.getElementById('camera-preview');
+        video.srcObject = cameraStream;
+        debugLog('カメラストリーム再利用');
+      } else {
+        await initCamera();
+      }
     });
 
     // リトライボタン
     document.getElementById('retry-btn').addEventListener('click', async () => {
+      // 拒否状態の場合は「再チェック」扱い
+      if (cameraPermissionState === 'denied') {
+        debugLog('設定変更確認 - 状態をリセット');
+        cameraPermissionState = 'unchecked'; // 再チェック可能に
+      }
+      
       showScreen('camera-screen');
       await initCamera();
+    });
+
+    // アプリ終了時のみストリームを停止
+    window.addEventListener('beforeunload', () => {
+      stopCamera();
     });
 
     // ========================================
