@@ -619,33 +619,10 @@
         originalCanvas = canvas;
         debugLog(`✅ 撮影完了 (${canvas.width}x${canvas.height})`);
         
-        // デバイスのアルバムに保存
-        saveToDevice(canvas);
-        
-        // カメラストリームは停止しない（再利用のため）
         showPreview();
       } catch (error) {
         debugLog(`❌ 撮影エラー: ${error.message}`);
         showError('撮影エラー', 'もう一度お試しください。');
-      }
-    }
-    
-    function saveToDevice(canvas) {
-      try {
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `aista_scan_${Date.now()}.jpg`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          debugLog('画像をデバイスに保存');
-        }, 'image/jpeg', 0.95);
-      } catch (error) {
-        debugLog(`保存エラー: ${error.message}`);
-        // 保存失敗しても処理は継続
       }
     }
 
