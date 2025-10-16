@@ -16,6 +16,10 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
       background: #000;
+      position: fixed;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
     }
     
     .screen {
@@ -30,7 +34,9 @@
       display: flex;
     }
     
-    /* カメラ画面 */
+    /* ========================================
+     * カメラ画面
+     * ======================================== */
     #camera-screen {
       background: #000;
       position: relative;
@@ -65,7 +71,6 @@
       z-index: 1;
     }
     
-    /* カメラグリッド */
     .camera-grid {
       position: absolute;
       top: 0;
@@ -108,20 +113,20 @@
       right: 0;
       height: auto;
       background: transparent;
-      padding: 30px 20px;
+      padding: 20px 20px 30px 20px;
       text-align: center;
       z-index: 100;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-end;
       align-items: center;
-      gap: 15px;
+      gap: 20px;
     }
     
     .hint {
       color: #fff;
       font-size: 12px;
-      margin-bottom: 15px;
+      margin-bottom: 0;
       text-shadow: 0 2px 4px rgba(0,0,0,0.8);
       background: rgba(0,0,0,0.6);
       padding: 8px 12px;
@@ -141,108 +146,119 @@
     
     #shutter-btn:active {
       transform: scale(0.95);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.8);
+      background: #f0f0f0;
     }
     
-    /* 編集画面 */
-    #preview-screen {
-      background: #222;
+    /* ========================================
+     * 編集画面
+     * ======================================== */
+    #edit-screen {
+      background: #333;
+      position: relative;
     }
     
-    .preview-container {
-      flex: 1;
+    .edit-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      overflow: hidden;
+      touch-action: none;
     }
     
-    #preview-canvas {
+    .edit-message {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      padding: 10px 16px;
+      border-radius: 20px;
+      color: #fff;
+      font-size: 13px;
+      z-index: 5;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    
+    #edit-canvas {
       max-width: 100%;
       max-height: 100%;
       touch-action: none;
     }
     
-    .edit-controls {
-      flex-shrink: 0;
-      background: #1a1a1a;
-      padding: 20px;
-    }
-    
-    .control-group {
-      margin-bottom: 20px;
-    }
-    
-    .control-label {
-      color: #fff;
-      font-size: 14px;
-      margin-bottom: 8px;
-      display: block;
-    }
-    
-    .slider-container {
+    .mode-buttons {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
-      align-items: center;
-      gap: 10px;
+      gap: 8px;
+      z-index: 10;
     }
     
-    #brightness-slider {
-      flex: 1;
-      height: 6px;
-      border-radius: 3px;
-      background: #444;
-      outline: none;
-      -webkit-appearance: none;
-    }
-    
-    #brightness-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #fff;
-      cursor: pointer;
-    }
-    
-    #brightness-value {
-      color: #fff;
-      font-size: 14px;
-      min-width: 40px;
-      text-align: right;
-    }
-    
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
+    .mode-btn {
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 8px;
-      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.2s;
+      min-width: 60px;
     }
     
-    .btn:active {
-      opacity: 0.7;
+    .mode-btn.active {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.95);
+      font-weight: 500;
+    }
+    
+    .action-buttons {
+      position: absolute;
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      gap: 10px;
+      z-index: 10;
     }
     
     .btn-secondary {
-      background: #444;
+      flex: 1;
+      padding: 14px;
+      background: rgba(0,0,0,0.75);
       color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      line-height: 1.2;
     }
     
     .btn-primary {
+      flex: 2;
+      padding: 14px;
       background: #06c755;
       color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
+      line-height: 1.2;
     }
     
-    /* 処理中画面 */
+    /* ========================================
+     * 処理中画面
+     * ======================================== */
     #processing-screen {
       background: #fff;
       align-items: center;
@@ -274,7 +290,9 @@
       color: #999;
     }
     
-    /* 完了画面 */
+    /* ========================================
+     * 完了画面
+     * ======================================== */
     #complete-screen {
       background: #fff;
       align-items: center;
@@ -312,7 +330,9 @@
       margin-bottom: 10px;
     }
     
-    /* エラー画面 */
+    /* ========================================
+     * エラー画面
+     * ======================================== */
     #error-screen {
       background: #fff;
       align-items: center;
@@ -333,6 +353,7 @@
       text-align: center;
       margin-bottom: 30px;
       padding: 0 20px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -343,7 +364,6 @@
     <div class="header">カメラスキャン</div>
     <video id="camera-preview" autoplay playsinline></video>
     
-    <!-- グリッド表示 -->
     <div class="camera-grid">
       <div class="grid-line grid-vertical-1"></div>
       <div class="grid-line grid-vertical-2"></div>
@@ -358,24 +378,20 @@
   </div>
 
   <!-- 編集画面 -->
-  <div id="preview-screen" class="screen">
-    <div class="header">編集</div>
-    <div class="preview-container">
-      <canvas id="preview-canvas"></canvas>
+  <div id="edit-screen" class="screen">
+    <div class="edit-container">
+      <div class="edit-message">解説して欲しい部分を切り取ろう！</div>
+      <canvas id="edit-canvas" width="360" height="640"></canvas>
     </div>
-    <div class="edit-controls">
-      <div class="control-group">
-        <label class="control-label">明るさ</label>
-        <div class="slider-container">
-          <input type="range" id="brightness-slider" min="50" max="150" value="100">
-          <span id="brightness-value">100%</span>
-        </div>
-      </div>
-      <div class="button-group">
-        <button class="btn btn-secondary" id="rotate-btn">🔄 回転</button>
-        <button class="btn btn-secondary" id="retake-btn">📷 撮り直し</button>
-      </div>
-      <button class="btn btn-primary" id="send-btn">✅ この内容で送信</button>
+    
+    <div class="mode-buttons">
+      <button id="rotate-mode-btn" class="mode-btn active">回転</button>
+      <button id="move-mode-btn" class="mode-btn">移動</button>
+    </div>
+    
+    <div class="action-buttons">
+      <button id="retake-btn" class="btn-secondary">撮り直し</button>
+      <button id="send-btn" class="btn-primary">送信</button>
     </div>
   </div>
 
@@ -411,22 +427,59 @@
     const WORKER_URL = 'https://aista-document-processor.luminalice-reg-tea-sun-red-9b0.workers.dev/upload-image';
     const DEBUG_MODE = true;
 
+    // Canvas設定
+    const CANVAS_WIDTH = 360;
+    const CANVAS_HEIGHT = 640;
+    const CANVAS_CENTER_X = 180;
+    const CANVAS_CENTER_Y = 320;
+
+    // ハンドル設定
+    const HANDLE_VISUAL_SIZE = 6;
+    const HANDLE_TAP_AREA = 30;
+
+    // 制約値
+    const MIN_CROP_SIZE = 50;
+    const ROTATION_RANGE = 180;
+    const SCALE_MIN = 0.5;
+    const SCALE_MAX = 3.0;
+    const ROTATION_THRESHOLD = 10;
+
     // ========================================
-    // 状態管理
+    // グローバル状態管理
     // ========================================
+    
+    // LIFF認証情報
     let userId = null;
     let displayName = null;
+
+    // カメラ関連
     let cameraStream = null;
-    let originalCanvas = null;
-    let cropArea = null;
-    let rotation = 0;
-    let brightness = 1.0;
-    let isDragging = false;
-    let dragTarget = null;
-    let dragStartX = 0;
-    let dragStartY = 0;
     let cameraInitialized = false;
     let cameraPermissionState = 'unchecked';
+    let audioContext = null;
+
+    // 画像データ
+    let originalCanvas = null;
+
+    // 編集パラメータ
+    let rotation = 0;
+    let imageOffset = { x: 0, y: 0 };
+    let imageScale = 1;
+    let cropArea = { x: 30, y: 80, width: 300, height: 200 };
+
+    // UI状態
+    let editMode = 'rotate';
+
+    // ドラッグ操作
+    let isDragging = false;
+    let dragTarget = null;
+    let dragStartPos = { x: 0, y: 0 };
+    let dragStartClient = { x: 0, y: 0 };
+
+    // ジェスチャー
+    let initialPinchDistance = 0;
+    let isRotationGesture = false;
+    let isMouseDown = false;
 
     // ========================================
     // ユーティリティ
@@ -449,6 +502,10 @@
       document.getElementById('error-title').textContent = title;
       document.getElementById('error-detail').textContent = detail;
       showScreen('error-screen');
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
     }
 
     // ========================================
@@ -479,28 +536,34 @@
     }
 
     // ========================================
-    // カメラ起動
+    // 音声制御
     // ========================================
-    async function checkCameraPermission() {
-      if (navigator.permissions && navigator.permissions.query) {
-        try {
-          const result = await navigator.permissions.query({ name: 'camera' });
-          debugLog(`カメラ権限状態: ${result.state}`);
-          
-          if (result.state === 'granted') {
-            return 'granted';
-          } else if (result.state === 'denied') {
-            return 'denied';
-          }
-          return 'unchecked';
-        } catch (e) {
-          debugLog('Permissions API非対応');
-          return 'unchecked';
+    function initAudioContext() {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          debugLog('AudioContext初期化完了');
         }
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        gainNode.gain.value = 0.001;
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.001);
+        
+        debugLog('無音オーディオ再生完了');
+      } catch (error) {
+        debugLog(`AudioContext初期化エラー: ${error.message}`);
       }
-      return 'unchecked';
     }
 
+    // ========================================
+    // カメラ起動
+    // ========================================
     async function initCamera() {
       if (cameraStream && cameraInitialized) {
         debugLog('カメラストリーム再利用');
@@ -515,17 +578,10 @@
         return;
       }
       
-      if (cameraPermissionState === 'unchecked') {
-        const preCheckState = await checkCameraPermission();
-        if (preCheckState === 'denied') {
-          cameraPermissionState = 'denied';
-          showCameraPermissionGuide();
-          return;
-        }
-      }
-      
       try {
         debugLog('カメラ初期化開始...');
+        initAudioContext();
+        
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment',
@@ -539,13 +595,14 @@
         cameraInitialized = true;
         
         const video = document.getElementById('camera-preview');
+        video.volume = 0;
+        video.muted = true;
         video.srcObject = stream;
         
         video.addEventListener('loadedmetadata', () => {
-          debugLog(`Video size: ${video.videoWidth}x${video.videoHeight}`);
+          debugLog(`✅ カメラ起動成功: ${video.videoWidth}x${video.videoHeight}`);
         }, { once: true });
         
-        debugLog('✅ カメラ起動成功');
       } catch (error) {
         handleCameraError(error);
       }
@@ -557,40 +614,12 @@
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         cameraPermissionState = 'denied';
         showCameraPermissionGuide();
-        
       } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        showError(
-          'カメラが見つかりません',
-          'お使いの端末にはカメラが搭載されていないか、接続されていません。'
-        );
-        
+        showError('カメラが見つかりません', 'お使いの端末にはカメラが搭載されていないか、接続されていません。');
       } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        showError(
-          'カメラにアクセスできません',
-          '他のアプリがカメラを使用している可能性があります。\n他のアプリを終了してから再度お試しください。'
-        );
-        
-      } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
-        debugLog('カメラ条件を緩和して再試行...');
-        retryWithLowerConstraints();
-        
+        showError('カメラにアクセスできません', '他のアプリがカメラを使用している可能性があります。\n他のアプリを終了してから再度お試しください。');
       } else {
         showError('カメラエラー', error.message);
-      }
-    }
-
-    async function retryWithLowerConstraints() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true
-        });
-        cameraStream = stream;
-        cameraPermissionState = 'granted';
-        cameraInitialized = true;
-        document.getElementById('camera-preview').srcObject = stream;
-        debugLog('✅ カメラ起動成功(低画質モード)');
-      } catch (error) {
-        showError('カメラエラー', 'カメラを起動できませんでした。');
       }
     }
 
@@ -618,27 +647,48 @@
         instructions = 'ブラウザの設定でカメラへのアクセスを許可してください。';
       }
       
-      showError(
-        'カメラの使用許可が必要です',
-        instructions
-      );
-    }
-
-    function stopCamera() {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-        cameraInitialized = false;
-        debugLog('カメラ停止');
-      }
+      showError('カメラの使用許可が必要です', instructions);
     }
 
     // ========================================
     // 撮影
     // ========================================
+    function showFlashEffect() {
+      const flash = document.createElement('div');
+      flash.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: white;
+        opacity: 0;
+        z-index: 9999;
+        pointer-events: none;
+        transition: opacity 0.15s ease-out;
+      `;
+      document.body.appendChild(flash);
+      
+      requestAnimationFrame(() => {
+        flash.style.opacity = '0.8';
+        setTimeout(() => {
+          flash.style.opacity = '0';
+          setTimeout(() => flash.remove(), 150);
+        }, 50);
+      });
+    }
+
     function capturePhoto() {
       try {
         debugLog('撮影開始...');
+        
+        if (audioContext && audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        
+        showFlashEffect();
+        
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+        
         const video = document.getElementById('camera-preview');
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
@@ -648,9 +698,9 @@
         ctx.drawImage(video, 0, 0);
         
         originalCanvas = canvas;
-        debugLog(`✅ 撮影完了 (${canvas.width}x${canvas.height})`);
+        debugLog(`✅ 撮影完了: ${canvas.width}x${canvas.height}`);
         
-        showPreview();
+        showEditScreen();
       } catch (error) {
         debugLog(`❌ 撮影エラー: ${error.message}`);
         showError('撮影エラー', 'もう一度お試しください。');
@@ -658,94 +708,135 @@
     }
 
     // ========================================
-    // プレビュー表示
+    // 編集画面表示
     // ========================================
-    function showPreview() {
-      showScreen('preview-screen');
-      
-      const previewCanvas = document.getElementById('preview-canvas');
-      const maxWidth = window.innerWidth;
-      const maxHeight = window.innerHeight * 0.5;
-      
-      const scale = Math.min(
-        maxWidth / originalCanvas.width,
-        maxHeight / originalCanvas.height
-      );
-      
-      previewCanvas.width = originalCanvas.width * scale;
-      previewCanvas.height = originalCanvas.height * scale;
-      
-      cropArea = {
-        x: previewCanvas.width * 0.1,
-        y: previewCanvas.height * 0.1,
-        width: previewCanvas.width * 0.8,
-        height: previewCanvas.height * 0.8
-      };
-      
-      rotation = 0;
-      brightness = 1.0;
-      
-      redrawPreview();
-      debugLog('プレビュー表示完了');
-    }
-
-    // ========================================
-    // 画像編集
-    // ========================================
-    function redrawPreview() {
-      const canvas = document.getElementById('preview-canvas');
-      const ctx = canvas.getContext('2d');
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      
-      if (rotation !== 0) {
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    function showEditScreen() {
+      if (!originalCanvas) {
+        showError('画像データがありません', 'もう一度撮影してください');
+        return;
       }
       
-      ctx.filter = `brightness(${brightness})`;
-      ctx.drawImage(originalCanvas, 0, 0, canvas.width, canvas.height);
+      // 編集パラメータ初期化
+      rotation = 0;
+      imageOffset = { x: 0, y: 0 };
+      imageScale = 1;
+      
+      const scale = Math.min(
+        window.innerWidth / originalCanvas.width,
+        (window.innerHeight * 0.7) / originalCanvas.height
+      );
+      
+      const canvas = document.getElementById('edit-canvas');
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
+      
+      cropArea = {
+        x: CANVAS_WIDTH * 0.1,
+        y: CANVAS_HEIGHT * 0.1,
+        width: CANVAS_WIDTH * 0.8,
+        height: CANVAS_HEIGHT * 0.8
+      };
+      
+      editMode = 'rotate';
+      updateModeButtons();
+      
+      showScreen('edit-screen');
+      drawEditCanvas();
+      
+      debugLog('編集画面表示完了');
+    }
+
+    // ========================================
+    // Canvas描画
+    // ========================================
+    function drawEditCanvas() {
+      const canvas = document.getElementById('edit-canvas');
+      if (!canvas || !originalCanvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      
+      // 暗い背景画像
+      drawImageWithTransform(ctx);
+      
+      // 黒オーバーレイ
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      
+      // トリミング内を明るく
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      ctx.clip();
+      drawImageWithTransform(ctx);
       ctx.restore();
       
-      drawCropArea(ctx);
+      // ハンドル描画
+      drawCropHandles(ctx);
     }
 
-    function drawCropArea(ctx) {
-      const { x, y, width, height } = cropArea;
+    function drawImageWithTransform(ctx) {
+      ctx.save();
       
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.translate(CANVAS_CENTER_X + imageOffset.x, CANVAS_CENTER_Y + imageOffset.y);
+      ctx.scale(imageScale, imageScale);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.translate(-CANVAS_CENTER_X, -CANVAS_CENTER_Y);
       
-      ctx.clearRect(x, y, width, height);
+      ctx.drawImage(originalCanvas, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       
-      ctx.strokeStyle = '#06c755';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
+      ctx.restore();
+    }
+
+    function drawCropHandles(ctx) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
       
-      const handleSize = 20;
-      ctx.fillStyle = '#06c755';
+      const positions = [
+        [cropArea.x, cropArea.y],
+        [cropArea.x + cropArea.width, cropArea.y],
+        [cropArea.x, cropArea.y + cropArea.height],
+        [cropArea.x + cropArea.width, cropArea.y + cropArea.height]
+      ];
       
-      ctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      ctx.fillRect(x + width - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      ctx.fillRect(x - handleSize / 2, y + height - handleSize / 2, handleSize, handleSize);
-      ctx.fillRect(x + width - handleSize / 2, y + height - handleSize / 2, handleSize, handleSize);
+      positions.forEach(([x, y]) => {
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(Math.round(x), Math.round(y), HANDLE_VISUAL_SIZE, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      ctx.restore();
     }
 
     // ========================================
-    // トリミング操作
+    // 編集操作 - イベントハンドラー
     // ========================================
-    function getTouchPos(canvas, touch) {
-      const rect = canvas.getBoundingClientRect();
+    function getCanvasPosition(e) {
+      const container = document.querySelector('.edit-container');
+      const rect = container.getBoundingClientRect();
+      const canvas = document.getElementById('edit-canvas');
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
       return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY,
+        clientX,
+        clientY
       };
     }
 
-    function getHandleAt(x, y) {
-      const handleSize = 20;
+    function calculatePinchDistance(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function detectHandle(x, y) {
       const handles = [
         { name: 'tl', x: cropArea.x, y: cropArea.y },
         { name: 'tr', x: cropArea.x + cropArea.width, y: cropArea.y },
@@ -754,92 +845,156 @@
       ];
       
       for (const handle of handles) {
-        if (Math.abs(x - handle.x) < handleSize && Math.abs(y - handle.y) < handleSize) {
+        const distance = Math.sqrt(Math.pow(x - handle.x, 2) + Math.pow(y - handle.y, 2));
+        if (distance < HANDLE_TAP_AREA) {
           return handle.name;
         }
       }
-      
-      if (x >= cropArea.x && x <= cropArea.x + cropArea.width &&
-          y >= cropArea.y && y <= cropArea.y + cropArea.height) {
-        return 'move';
-      }
-      
       return null;
     }
 
-    document.getElementById('preview-canvas').addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const canvas = e.target;
-      const touch = e.touches[0];
-      const pos = getTouchPos(canvas, touch);
+    function isInsideCropArea(x, y) {
+      return x >= cropArea.x && x <= cropArea.x + cropArea.width &&
+             y >= cropArea.y && y <= cropArea.y + cropArea.height;
+    }
+
+    function handleEditPointerDown(e) {
+      const isTouch = e.type === 'touchstart';
+      if (!isTouch) setIsMouseDown(true);
       
-      dragTarget = getHandleAt(pos.x, pos.y);
-      if (dragTarget) {
+      e.preventDefault();
+      
+      const pos = getCanvasPosition(e);
+      dragStartPos = { x: pos.x, y: pos.y };
+      dragStartClient = { x: pos.clientX, y: pos.clientY };
+      
+      // 優先度1: ピンチ
+      if (isTouch && e.touches.length === 2) {
+        initialPinchDistance = calculatePinchDistance(e.touches);
+        dragTarget = 'pinch';
         isDragging = true;
-        dragStartX = pos.x;
-        dragStartY = pos.y;
+        return;
       }
-    });
+      
+      // 優先度2: ハンドル
+      const handle = detectHandle(pos.x, pos.y);
+      if (handle) {
+        dragTarget = handle;
+        isDragging = true;
+        return;
+      }
+      
+      // 優先度3: 枠内
+      if (isInsideCropArea(pos.x, pos.y)) {
+        dragTarget = 'move';
+        isDragging = true;
+        return;
+      }
+      
+      // 優先度4: 移動モード時の枠外
+      if (editMode === 'move') {
+        dragTarget = 'image';
+        isDragging = true;
+      }
+    }
 
-    document.getElementById('preview-canvas').addEventListener('touchmove', (e) => {
-      if (!isDragging || !dragTarget) return;
+    function handleEditPointerMove(e) {
+      const isTouch = e.type === 'touchmove';
+      if (!isTouch && !isMouseDown) return;
+      
       e.preventDefault();
       
-      const canvas = e.target;
-      const touch = e.touches[0];
-      const pos = getTouchPos(canvas, touch);
+      const pos = getCanvasPosition(e);
       
-      const dx = pos.x - dragStartX;
-      const dy = pos.y - dragStartY;
-      
-      const minSize = 50;
-      
-      if (dragTarget === 'move') {
-        cropArea.x = Math.max(0, Math.min(canvas.width - cropArea.width, cropArea.x + dx));
-        cropArea.y = Math.max(0, Math.min(canvas.height - cropArea.height, cropArea.y + dy));
-      } else if (dragTarget === 'tl') {
-        const newX = Math.min(cropArea.x + cropArea.width - minSize, cropArea.x + dx);
-        const newY = Math.min(cropArea.y + cropArea.height - minSize, cropArea.y + dy);
-        cropArea.width += cropArea.x - newX;
-        cropArea.height += cropArea.y - newY;
-        cropArea.x = Math.max(0, newX);
-        cropArea.y = Math.max(0, newY);
-      } else if (dragTarget === 'tr') {
-        const newWidth = Math.max(minSize, cropArea.width + dx);
-        const newY = Math.min(cropArea.y + cropArea.height - minSize, cropArea.y + dy);
-        cropArea.width = Math.min(canvas.width - cropArea.x, newWidth);
-        cropArea.height += cropArea.y - newY;
-        cropArea.y = Math.max(0, newY);
-      } else if (dragTarget === 'bl') {
-        const newX = Math.min(cropArea.x + cropArea.width - minSize, cropArea.x + dx);
-        const newHeight = Math.max(minSize, cropArea.height + dy);
-        cropArea.width += cropArea.x - newX;
-        cropArea.x = Math.max(0, newX);
-        cropArea.height = Math.min(canvas.height - cropArea.y, newHeight);
-      } else if (dragTarget === 'br') {
-        cropArea.width = Math.max(minSize, Math.min(canvas.width - cropArea.x, cropArea.width + dx));
-        cropArea.height = Math.max(minSize, Math.min(canvas.height - cropArea.y, cropArea.height + dy));
+      // ピンチ
+      if (dragTarget === 'pinch' && isTouch && e.touches.length === 2) {
+        const currentDistance = calculatePinchDistance(e.touches);
+        const scaleRatio = currentDistance / initialPinchDistance;
+        imageScale = clamp(imageScale * scaleRatio, SCALE_MIN, SCALE_MAX);
+        initialPinchDistance = currentDistance;
+        drawEditCanvas();
+        return;
       }
       
-      dragStartX = pos.x;
-      dragStartY = pos.y;
+      // ドラッグ操作
+      if (isDragging && dragTarget) {
+        const dx = pos.x - dragStartPos.x;
+        const dy = pos.y - dragStartPos.y;
+        
+        if (dragTarget === 'image') {
+          imageOffset.x += dx;
+          imageOffset.y += dy;
+        } else if (dragTarget === 'move') {
+          cropArea.x = clamp(cropArea.x + dx, 0, CANVAS_WIDTH - cropArea.width);
+          cropArea.y = clamp(cropArea.y + dy, 0, CANVAS_HEIGHT - cropArea.height);
+        } else if (['tl', 'tr', 'bl', 'br'].includes(dragTarget)) {
+          updateCropAreaCorner(dragTarget, dx, dy);
+        }
+        
+        dragStartPos = { x: pos.x, y: pos.y };
+        drawEditCanvas();
+        return;
+      }
       
-      redrawPreview();
-    });
+      // 回転ジェスチャー
+      if (editMode === 'rotate' && !isDragging) {
+        const deltaX = pos.clientX - dragStartClient.x;
+        
+        if (!isRotationGesture && Math.abs(deltaX) > ROTATION_THRESHOLD) {
+          isRotationGesture = true;
+        }
+        
+        if (isRotationGesture) {
+          rotation = clamp(Math.round(deltaX / 2), -ROTATION_RANGE, ROTATION_RANGE);
+          drawEditCanvas();
+        }
+      }
+    }
 
-    document.getElementById('preview-canvas').addEventListener('touchend', () => {
+    function handleEditPointerUp() {
       isDragging = false;
       dragTarget = null;
-    });
+      isMouseDown = false;
+      isRotationGesture = false;
+    }
+
+    function updateCropAreaCorner(corner, dx, dy) {
+      switch (corner) {
+        case 'tl':
+          const newTlX = clamp(cropArea.x + dx, 0, cropArea.x + cropArea.width - MIN_CROP_SIZE);
+          const newTlY = clamp(cropArea.y + dy, 0, cropArea.y + cropArea.height - MIN_CROP_SIZE);
+          cropArea.width += cropArea.x - newTlX;
+          cropArea.height += cropArea.y - newTlY;
+          cropArea.x = newTlX;
+          cropArea.y = newTlY;
+          break;
+        case 'tr':
+          const newTrY = clamp(cropArea.y + dy, 0, cropArea.y + cropArea.height - MIN_CROP_SIZE);
+          cropArea.width = clamp(cropArea.width + dx, MIN_CROP_SIZE, CANVAS_WIDTH - cropArea.x);
+          cropArea.height += cropArea.y - newTrY;
+          cropArea.y = newTrY;
+          break;
+        case 'bl':
+          const newBlX = clamp(cropArea.x + dx, 0, cropArea.x + cropArea.width - MIN_CROP_SIZE);
+          cropArea.width += cropArea.x - newBlX;
+          cropArea.x = newBlX;
+          cropArea.height = clamp(cropArea.height + dy, MIN_CROP_SIZE, CANVAS_HEIGHT - cropArea.y);
+          break;
+        case 'br':
+          cropArea.width = clamp(cropArea.width + dx, MIN_CROP_SIZE, CANVAS_WIDTH - cropArea.x);
+          cropArea.height = clamp(cropArea.height + dy, MIN_CROP_SIZE, CANVAS_HEIGHT - cropArea.y);
+          break;
+      }
+    }
 
     // ========================================
-    // 画像送信
+    // 最終画像生成・送信
     // ========================================
     function generateFinalImage() {
       debugLog('最終画像生成開始...');
       
-      const previewCanvas = document.getElementById('preview-canvas');
-      const scale = originalCanvas.width / previewCanvas.width;
+      const canvas = document.getElementById('edit-canvas');
+      const scale = originalCanvas.width / canvas.width;
       
       const actualCrop = {
         x: cropArea.x * scale,
@@ -853,20 +1008,22 @@
       finalCanvas.height = actualCrop.height;
       
       const ctx = finalCanvas.getContext('2d');
-      ctx.filter = `brightness(${brightness})`;
+      ctx.save();
+      ctx.translate(finalCanvas.width / 2, finalCanvas.height / 2);
+      ctx.scale(imageScale, imageScale);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.translate(-finalCanvas.width / 2, -finalCanvas.height / 2);
       
       ctx.drawImage(
         originalCanvas,
         actualCrop.x, actualCrop.y, actualCrop.width, actualCrop.height,
-        0, 0, actualCrop.width, actualCrop.height
+        0, 0, finalCanvas.width, finalCanvas.height
       );
+      
+      ctx.restore();
       
       debugLog(`最終画像サイズ: ${finalCanvas.width}x${finalCanvas.height}`);
       return finalCanvas;
-    }
-
-    function canvasToBase64(canvas, quality = 0.9) {
-      return canvas.toDataURL('image/jpeg', quality).split(',')[1];
     }
 
     async function uploadImage() {
@@ -875,13 +1032,13 @@
         debugLog('送信処理開始...');
         
         const finalCanvas = generateFinalImage();
-        const base64Data = canvasToBase64(finalCanvas);
+        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.9).split(',')[1];
         const imageSize = Math.round(base64Data.length * 0.75);
         
         debugLog(`画像エンコード完了 (${(imageSize / 1024 / 1024).toFixed(2)}MB)`);
         
         if (imageSize > 10 * 1024 * 1024) {
-          throw new Error('画像サイズが大きすぎます(10MB以下にしてください)');
+          throw new Error('画像サイズが大きすぎます（10MB以下にしてください）');
         }
         
         const fileName = `scan_${Date.now()}.jpg`;
@@ -900,9 +1057,7 @@
         
         const response = await fetch(WORKER_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestData)
         });
         
@@ -913,14 +1068,10 @@
           let errorDetail = response.statusText;
           try {
             const errorJson = JSON.parse(responseText);
-            if (errorJson.error) {
-              errorDetail = errorJson.error;
-            }
+            if (errorJson.error) errorDetail = errorJson.error;
           } catch (e) {
             errorDetail = responseText || response.statusText;
           }
-          
-          debugLog(`❌ エラー詳細: ${errorDetail}`);
           throw new Error(errorDetail);
         }
         
@@ -934,21 +1085,9 @@
         let errorTitle = '送信に失敗しました';
         let errorMessage = error.message;
         
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        if (error.message.includes('Failed to fetch')) {
           errorTitle = 'ネットワークエラー';
           errorMessage = 'インターネット接続を確認して、もう一度お試しください。';
-        } else if (error.message.includes('GEMINI_API_KEY')) {
-          errorTitle = '設定エラー';
-          errorMessage = 'サーバーの設定に問題があります。管理者にお問い合わせください。\n\n詳細: Gemini APIキーが未設定';
-        } else if (error.message.includes('LINE_CHANNEL_ACCESS_TOKEN')) {
-          errorTitle = '設定エラー';
-          errorMessage = 'サーバーの設定に問題があります。管理者にお問い合わせください。\n\n詳細: LINEトークンが未設定';
-        } else if (error.message.includes('Gemini Vision API Error')) {
-          errorTitle = 'AI処理エラー';
-          errorMessage = '画像の解析に失敗しました。\n\n• より明るい場所で撮影してください\n• ピントを合わせて撮影してください\n• もう一度お試しください';
-        } else if (error.message.includes('LINE API Error')) {
-          errorTitle = 'LINE通知エラー';
-          errorMessage = '処理は完了しましたが、LINEへの通知に失敗しました。';
         }
         
         showError(errorTitle, errorMessage);
@@ -956,59 +1095,70 @@
     }
 
     // ========================================
+    // UI制御
+    // ========================================
+    function updateModeButtons() {
+      document.getElementById('rotate-mode-btn').classList.toggle('active', editMode === 'rotate');
+      document.getElementById('move-mode-btn').classList.toggle('active', editMode === 'move');
+    }
+
+    // ========================================
     // イベントリスナー
     // ========================================
     
-    document.getElementById('brightness-slider').addEventListener('input', (e) => {
-      brightness = e.target.value / 100;
-      document.getElementById('brightness-value').textContent = e.target.value + '%';
-      redrawPreview();
-    });
-
-    document.getElementById('rotate-btn').addEventListener('click', () => {
-      rotation = (rotation + 90) % 360;
-      debugLog(`回転: ${rotation}度`);
-      redrawPreview();
-    });
-
-    document.getElementById('retake-btn').addEventListener('click', async () => {
-      showScreen('camera-screen');
-      if (cameraStream && cameraInitialized) {
-        const video = document.getElementById('camera-preview');
-        video.srcObject = cameraStream;
-        debugLog('カメラストリーム再利用');
-      } else {
-        await initCamera();
-      }
-    });
-
-    document.getElementById('send-btn').addEventListener('click', uploadImage);
-
+    // カメラ
     document.getElementById('shutter-btn').addEventListener('click', capturePhoto);
-
-    document.getElementById('new-scan-btn').addEventListener('click', async () => {
+    
+    // 編集 - Canvas
+    const editCanvas = document.getElementById('edit-canvas');
+    editCanvas.addEventListener('touchstart', handleEditPointerDown);
+    editCanvas.addEventListener('touchmove', handleEditPointerMove);
+    editCanvas.addEventListener('touchend', handleEditPointerUp);
+    editCanvas.addEventListener('mousedown', handleEditPointerDown);
+    editCanvas.addEventListener('mousemove', handleEditPointerMove);
+    editCanvas.addEventListener('mouseup', handleEditPointerUp);
+    editCanvas.addEventListener('mouseleave', handleEditPointerUp);
+    
+    // 編集 - モード切替
+    document.getElementById('rotate-mode-btn').addEventListener('click', () => {
+      editMode = 'rotate';
+      updateModeButtons();
+    });
+    document.getElementById('move-mode-btn').addEventListener('click', () => {
+      editMode = 'move';
+      updateModeButtons();
+    });
+    
+    // 編集 - アクション
+    document.getElementById('retake-btn').addEventListener('click', () => {
       showScreen('camera-screen');
       if (cameraStream && cameraInitialized) {
         const video = document.getElementById('camera-preview');
         video.srcObject = cameraStream;
-        debugLog('カメラストリーム再利用');
       } else {
-        await initCamera();
+        initCamera();
       }
     });
-
-    document.getElementById('retry-btn').addEventListener('click', async () => {
+    
+    document.getElementById('send-btn').addEventListener('click', uploadImage);
+    
+    // 完了・エラー
+    document.getElementById('new-scan-btn').addEventListener('click', () => {
+      showScreen('camera-screen');
+      if (cameraStream && cameraInitialized) {
+        const video = document.getElementById('camera-preview');
+        video.srcObject = cameraStream;
+      } else {
+        initCamera();
+      }
+    });
+    
+    document.getElementById('retry-btn').addEventListener('click', () => {
       if (cameraPermissionState === 'denied') {
-        debugLog('設定変更確認 - 状態をリセット');
         cameraPermissionState = 'unchecked';
       }
-      
       showScreen('camera-screen');
-      await initCamera();
-    });
-
-    window.addEventListener('beforeunload', () => {
-      stopCamera();
+      initCamera();
     });
 
     // ========================================
