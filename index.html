@@ -22,7 +22,7 @@
       display: none;
       width: 100vw;
       height: 100vh;
-      height: 100dvh; /* 動的ビューポート */
+      height: 100dvh;
       flex-direction: column;
     }
     
@@ -65,6 +65,42 @@
       z-index: 1;
     }
     
+    /* カメラグリッド */
+    .camera-grid {
+      position: absolute;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 150px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    
+    .grid-line {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .grid-vertical-1,
+    .grid-vertical-2 {
+      width: 1px;
+      height: 100%;
+      top: 0;
+    }
+    
+    .grid-vertical-1 { left: 33.33%; }
+    .grid-vertical-2 { left: 66.66%; }
+    
+    .grid-horizontal-1,
+    .grid-horizontal-2 {
+      width: 100%;
+      height: 1px;
+      left: 0;
+    }
+    
+    .grid-horizontal-1 { top: 33.33%; }
+    .grid-horizontal-2 { top: 66.66%; }
+    
     .camera-controls {
       position: absolute;
       bottom: 0;
@@ -86,8 +122,8 @@
       color: #fff;
       font-size: 12px;
       margin-bottom: 15px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* 視認性向上 */
-      background: rgba(0,0,0,0.6); /* ヒントテキストに背景 */
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.6);
       padding: 8px 12px;
       border-radius: 4px;
     }
@@ -100,7 +136,7 @@
       border: 4px solid #333;
       cursor: pointer;
       transition: transform 0.1s;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5); /* 影で浮き上がらせる */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     
     #shutter-btn:active {
@@ -306,6 +342,15 @@
   <div id="camera-screen" class="screen">
     <div class="header">カメラスキャン</div>
     <video id="camera-preview" autoplay playsinline></video>
+    
+    <!-- グリッド表示 -->
+    <div class="camera-grid">
+      <div class="grid-line grid-vertical-1"></div>
+      <div class="grid-line grid-vertical-2"></div>
+      <div class="grid-line grid-horizontal-1"></div>
+      <div class="grid-line grid-horizontal-2"></div>
+    </div>
+    
     <div class="camera-controls">
       <div class="hint">アイスタに聞きたい箇所を撮影してください。</div>
       <button id="shutter-btn"></button>
@@ -381,7 +426,7 @@
     let dragStartX = 0;
     let dragStartY = 0;
     let cameraInitialized = false;
-    let cameraPermissionState = 'unchecked'; // 'unchecked' | 'granted' | 'denied'
+    let cameraPermissionState = 'unchecked';
 
     // ========================================
     // ユーティリティ
@@ -407,7 +452,7 @@
     }
 
     // ========================================
-    // STEP 2: LIFF初期化
+    // LIFF初期化
     // ========================================
     async function initLiff() {
       try {
@@ -434,10 +479,9 @@
     }
 
     // ========================================
-    // STEP 3: カメラ起動
+    // カメラ起動
     // ========================================
     async function checkCameraPermission() {
-      // Permissions APIで事前確認
       if (navigator.permissions && navigator.permissions.query) {
         try {
           const result = await navigator.permissions.query({ name: 'camera' });
@@ -458,7 +502,6 @@
     }
 
     async function initCamera() {
-      // 既にストリームがある場合は再利用
       if (cameraStream && cameraInitialized) {
         debugLog('カメラストリーム再利用');
         const video = document.getElementById('camera-preview');
@@ -466,14 +509,12 @@
         return;
       }
       
-      // 拒否状態の場合は案内画面のみ
       if (cameraPermissionState === 'denied') {
         debugLog('カメラ拒否済み - 案内表示');
         showCameraPermissionGuide();
         return;
       }
       
-      // 事前チェック（初回 or リトライ時）
       if (cameraPermissionState === 'unchecked') {
         const preCheckState = await checkCameraPermission();
         if (preCheckState === 'denied') {
@@ -500,13 +541,8 @@
         const video = document.getElementById('camera-preview');
         video.srcObject = stream;
         
-        // メタデータ読み込み後のデバッグ情報
         video.addEventListener('loadedmetadata', () => {
           debugLog(`Video size: ${video.videoWidth}x${video.videoHeight}`);
-          const controls = document.querySelector('.camera-controls');
-          const rect = controls.getBoundingClientRect();
-          debugLog(`Controls position: top=${rect.top}, bottom=${rect.bottom}`);
-          debugLog(`Controls visible: ${rect.bottom <= window.innerHeight}`);
         }, { once: true });
         
         debugLog('✅ カメラ起動成功');
@@ -519,31 +555,26 @@
       debugLog(`カメラエラー: ${error.name} - ${error.message}`);
       
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        // 拒否された
         cameraPermissionState = 'denied';
         showCameraPermissionGuide();
         
       } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        // カメラが見つからない
         showError(
           'カメラが見つかりません',
           'お使いの端末にはカメラが搭載されていないか、接続されていません。'
         );
         
       } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        // カメラが他のアプリで使用中
         showError(
           'カメラにアクセスできません',
           '他のアプリがカメラを使用している可能性があります。\n他のアプリを終了してから再度お試しください。'
         );
         
       } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
-        // 要求された条件を満たせない
         debugLog('カメラ条件を緩和して再試行...');
         retryWithLowerConstraints();
         
       } else {
-        // その他のエラー
         showError('カメラエラー', error.message);
       }
     }
@@ -551,13 +582,13 @@
     async function retryWithLowerConstraints() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: true // 最小限の設定
+          video: true
         });
         cameraStream = stream;
         cameraPermissionState = 'granted';
         cameraInitialized = true;
         document.getElementById('camera-preview').srcObject = stream;
-        debugLog('✅ カメラ起動成功（低画質モード）');
+        debugLog('✅ カメラ起動成功(低画質モード)');
       } catch (error) {
         showError('カメラエラー', 'カメラを起動できませんでした。');
       }
@@ -603,7 +634,7 @@
     }
 
     // ========================================
-    // STEP 4: 撮影
+    // 撮影
     // ========================================
     function capturePhoto() {
       try {
@@ -627,7 +658,7 @@
     }
 
     // ========================================
-    // STEP 5: プレビュー表示
+    // プレビュー表示
     // ========================================
     function showPreview() {
       showScreen('preview-screen');
@@ -644,7 +675,6 @@
       previewCanvas.width = originalCanvas.width * scale;
       previewCanvas.height = originalCanvas.height * scale;
       
-      // トリミング枠初期化
       cropArea = {
         x: previewCanvas.width * 0.1,
         y: previewCanvas.height * 0.1,
@@ -660,7 +690,7 @@
     }
 
     // ========================================
-    // STEP 6-7: 画像編集（明るさ・回転）
+    // 画像編集
     // ========================================
     function redrawPreview() {
       const canvas = document.getElementById('preview-canvas');
@@ -669,58 +699,42 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       
-      // 回転
       if (rotation !== 0) {
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((rotation * Math.PI) / 180);
         ctx.translate(-canvas.width / 2, -canvas.height / 2);
       }
       
-      // 明るさ
       ctx.filter = `brightness(${brightness})`;
-      
-      // 画像描画
       ctx.drawImage(originalCanvas, 0, 0, canvas.width, canvas.height);
       ctx.restore();
       
-      // トリミング枠描画
       drawCropArea(ctx);
     }
 
-    // ========================================
-    // STEP 8: トリミング枠描画
-    // ========================================
     function drawCropArea(ctx) {
       const { x, y, width, height } = cropArea;
       
-      // 半透明オーバーレイ
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       
-      // 選択範囲をクリア
       ctx.clearRect(x, y, width, height);
       
-      // 枠線
       ctx.strokeStyle = '#06c755';
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, width, height);
       
-      // ハンドル（4隅）
       const handleSize = 20;
       ctx.fillStyle = '#06c755';
       
-      // 左上
       ctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      // 右上
       ctx.fillRect(x + width - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      // 左下
       ctx.fillRect(x - handleSize / 2, y + height - handleSize / 2, handleSize, handleSize);
-      // 右下
       ctx.fillRect(x + width - handleSize / 2, y + height - handleSize / 2, handleSize, handleSize);
     }
 
     // ========================================
-    // STEP 9: トリミング操作
+    // トリミング操作
     // ========================================
     function getTouchPos(canvas, touch) {
       const rect = canvas.getBoundingClientRect();
@@ -745,7 +759,6 @@
         }
       }
       
-      // 枠内かチェック
       if (x >= cropArea.x && x <= cropArea.x + cropArea.width &&
           y >= cropArea.y && y <= cropArea.y + cropArea.height) {
         return 'move';
@@ -782,7 +795,6 @@
       const minSize = 50;
       
       if (dragTarget === 'move') {
-        // 枠全体を移動
         cropArea.x = Math.max(0, Math.min(canvas.width - cropArea.width, cropArea.x + dx));
         cropArea.y = Math.max(0, Math.min(canvas.height - cropArea.height, cropArea.y + dy));
       } else if (dragTarget === 'tl') {
@@ -821,7 +833,7 @@
     });
 
     // ========================================
-    // STEP 10: 画像送信
+    // 画像送信
     // ========================================
     function generateFinalImage() {
       debugLog('最終画像生成開始...');
@@ -829,7 +841,6 @@
       const previewCanvas = document.getElementById('preview-canvas');
       const scale = originalCanvas.width / previewCanvas.width;
       
-      // 実際のピクセル座標に変換
       const actualCrop = {
         x: cropArea.x * scale,
         y: cropArea.y * scale,
@@ -844,7 +855,6 @@
       const ctx = finalCanvas.getContext('2d');
       ctx.filter = `brightness(${brightness})`;
       
-      // トリミング + 明るさ適用
       ctx.drawImage(
         originalCanvas,
         actualCrop.x, actualCrop.y, actualCrop.width, actualCrop.height,
@@ -870,9 +880,8 @@
         
         debugLog(`画像エンコード完了 (${(imageSize / 1024 / 1024).toFixed(2)}MB)`);
         
-        // サイズチェック
         if (imageSize > 10 * 1024 * 1024) {
-          throw new Error('画像サイズが大きすぎます（10MB以下にしてください）');
+          throw new Error('画像サイズが大きすぎます(10MB以下にしてください)');
         }
         
         const fileName = `scan_${Date.now()}.jpg`;
@@ -888,7 +897,6 @@
         };
         
         debugLog(`Workers送信: ${WORKER_URL}`);
-        debugLog(`リクエストデータ: userId=${userId}, size=${(imageSize/1024/1024).toFixed(2)}MB`);
         
         const response = await fetch(WORKER_URL, {
           method: 'POST',
@@ -898,12 +906,10 @@
           body: JSON.stringify(requestData)
         });
         
-        // レスポンスボディを先に取得
         const responseText = await response.text();
         debugLog(`レスポンス受信: status=${response.status}`);
         
         if (!response.ok) {
-          // より詳細なエラーメッセージを取得
           let errorDetail = response.statusText;
           try {
             const errorJson = JSON.parse(responseText);
@@ -911,7 +917,6 @@
               errorDetail = errorJson.error;
             }
           } catch (e) {
-            // JSONパース失敗時はresponseTextをそのまま使う
             errorDetail = responseText || response.statusText;
           }
           
@@ -926,7 +931,6 @@
       } catch (error) {
         debugLog(`❌ 送信エラー: ${error.message}`);
         
-        // エラーメッセージを分類
         let errorTitle = '送信に失敗しました';
         let errorMessage = error.message;
         
@@ -955,24 +959,20 @@
     // イベントリスナー
     // ========================================
     
-    // 明るさスライダー
     document.getElementById('brightness-slider').addEventListener('input', (e) => {
       brightness = e.target.value / 100;
       document.getElementById('brightness-value').textContent = e.target.value + '%';
       redrawPreview();
     });
 
-    // 回転ボタン
     document.getElementById('rotate-btn').addEventListener('click', () => {
       rotation = (rotation + 90) % 360;
       debugLog(`回転: ${rotation}度`);
       redrawPreview();
     });
 
-    // 撮り直しボタン
     document.getElementById('retake-btn').addEventListener('click', async () => {
       showScreen('camera-screen');
-      // ストリームは停止せず再利用
       if (cameraStream && cameraInitialized) {
         const video = document.getElementById('camera-preview');
         video.srcObject = cameraStream;
@@ -982,16 +982,12 @@
       }
     });
 
-    // 送信ボタン
     document.getElementById('send-btn').addEventListener('click', uploadImage);
 
-    // シャッターボタン
     document.getElementById('shutter-btn').addEventListener('click', capturePhoto);
 
-    // 新しくスキャンボタン
     document.getElementById('new-scan-btn').addEventListener('click', async () => {
       showScreen('camera-screen');
-      // ストリームは停止せず再利用
       if (cameraStream && cameraInitialized) {
         const video = document.getElementById('camera-preview');
         video.srcObject = cameraStream;
@@ -1001,19 +997,16 @@
       }
     });
 
-    // リトライボタン
     document.getElementById('retry-btn').addEventListener('click', async () => {
-      // 拒否状態の場合は「再チェック」扱い
       if (cameraPermissionState === 'denied') {
         debugLog('設定変更確認 - 状態をリセット');
-        cameraPermissionState = 'unchecked'; // 再チェック可能に
+        cameraPermissionState = 'unchecked';
       }
       
       showScreen('camera-screen');
       await initCamera();
     });
 
-    // アプリ終了時のみストリームを停止
     window.addEventListener('beforeunload', () => {
       stopCamera();
     });
