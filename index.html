@@ -68,6 +68,7 @@
     
     /* ヘッダー */
     .header {
+      flex-shrink: 0;
       background: rgba(0, 0, 0, 0.5);
       padding: 15px;
       color: white;
@@ -93,21 +94,27 @@
     /* カメラ撮影画面 */
     #camera-screen {
       background: black;
+      display: flex;
+      flex-direction: column;
     }
     
     #camera-preview {
+      flex: 1;
       width: 100%;
-      height: calc(100vh - 150px);
       object-fit: cover;
+      position: relative;
+      z-index: 1;
     }
     
     .camera-controls {
+      flex-shrink: 0;
       background: rgba(0, 0, 0, 0.8);
       padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 15px;
+      z-index: 100;
     }
     
     #shutter-btn {
@@ -589,7 +596,7 @@
     // 背景アニメーション
     // ========================================
     function initBackgroundAnimation() {
-      const formulas = ['∫', '∑', 'π', 'α', 'β', 'θ', '√', '∞', 'Δ', 'Σ'];
+      const formulas = ['∫', '∑', 'π', 'α', 'β', 'θ', '√', '∞', '∆', 'Σ'];
       const container = document.getElementById('bg-animation');
       
       for (let i = 0; i < 15; i++) {
