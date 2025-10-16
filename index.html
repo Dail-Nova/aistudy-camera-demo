@@ -37,9 +37,12 @@
     }
     
     .header {
-      flex: 0 0 auto; /* 絶対に縮小しない */
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 60px;
-      background: rgba(0,0,0,0.8);
+      background: transparent;
       padding: 15px;
       color: #fff;
       text-align: center;
@@ -48,32 +51,35 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
       z-index: 10;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
     
     #camera-preview {
-      flex: 1 1 auto;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      min-height: 0;
-      max-height: calc(100vh - 210px); /* header(60px) + controls(150px) */
+      height: 100%;
       object-fit: cover;
-      position: relative;
       z-index: 1;
     }
     
     .camera-controls {
-      flex: 0 0 auto; /* 絶対に縮小しない */
-      height: 150px; /* 固定高さ */
-      background: transparent; /* 完全透明 */
-      padding: 20px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: auto;
+      background: transparent;
+      padding: 30px 20px;
       text-align: center;
-      position: relative;
       z-index: 100;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      gap: 15px;
     }
     
     .hint {
