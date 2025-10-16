@@ -548,8 +548,8 @@
     // ========================================
     // 設定
     // ========================================
-    const LIFF_ID = '2008304828-OnEyAwBm';  // ← あなたのLIFF IDに変更してください
-    const WORKER_URL = 'https://aista-document-processor.luminalice-reg-tea-sun-red-9b0.workers.dev/upload-image';
+    const LIFF_ID = '2008235357-XXXXXXXX';  // ← あなたのLIFF IDに変更してください
+    const WORKER_URL = 'https://aista-pdf-processor.luminalice-reg-tea-sun-red-9b0.workers.dev/upload-image';
     const DEBUG_MODE = true;  // 本番: false
     
     // ========================================
@@ -563,6 +563,7 @@
     let rotation = 0;
     let brightness = 1.0;
     let needsRedraw = false;
+    let cameraInitialized = false;
     
     // ========================================
     // デバッグログ
@@ -634,7 +635,12 @@
         
         // カメラ画面表示
         showScreen('camera-screen');
-        await initCamera();
+        
+        // カメラ初期化は1度だけ
+        if (!cameraInitialized) {
+          await initCamera();
+          cameraInitialized = true;
+        }
         
       } catch (error) {
         debugLog(`❌ LIFF初期化エラー: ${error.message}`);
@@ -967,6 +973,7 @@
       rotation = 0;
       brightness = 1.0;
       document.getElementById('brightness-slider').value = 100;
+      cameraInitialized = false;  // カメラ再初期化を許可
       showScreen('camera-screen');
       initCamera();
     });
