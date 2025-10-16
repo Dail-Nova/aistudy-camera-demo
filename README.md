@@ -1,1 +1,0 @@
-# aistudy-camera-demo
