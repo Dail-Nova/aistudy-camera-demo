@@ -133,20 +133,54 @@
       border-radius: 4px;
     }
     
+    .camera-buttons {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+    }
+    
+    .camera-sub-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .camera-sub-btn:active {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .camera-sub-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+      stroke-width: 2;
+      fill: none;
+    }
+    
     #shutter-btn {
       width: 80px;
       height: 80px;
       border-radius: 50%;
       background: #fff;
-      border: 4px solid #333;
+      border: 4px solid #000;
       cursor: pointer;
       transition: transform 0.1s;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: none;
     }
     
     #shutter-btn:active {
       transform: scale(0.95);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.8);
       background: #f0f0f0;
     }
     
@@ -312,22 +346,51 @@
       color: #666;
       text-align: center;
       margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    
+    .complete-buttons {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
     
     .action-btn {
-      width: 200px;
-      padding: 15px;
+      width: 100%;
+      padding: 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 16px;
       cursor: pointer;
+      transition: all 0.2s;
     }
     
     .action-btn-primary {
       background: #06c755;
       color: #fff;
       font-weight: bold;
-      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(6, 199, 85, 0.3);
+    }
+    
+    .action-btn-primary:active {
+      background: #05b349;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(6, 199, 85, 0.4);
+    }
+    
+    .action-btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+      font-weight: 500;
+      font-size: 15px;
+    }
+    
+    .action-btn-secondary:active {
+      background: #e8e8e8;
+      border-color: #ccc;
     }
     
     /* ========================================
@@ -373,7 +436,23 @@
     
     <div class="camera-controls">
       <div class="hint">アイスタで解説してほしい問題を撮影しよう！</div>
-      <button id="shutter-btn"></button>
+      <div class="camera-buttons">
+        <button id="album-btn" class="camera-sub-btn">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </button>
+        <button id="shutter-btn"></button>
+        <button id="help-btn" class="camera-sub-btn">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -409,7 +488,10 @@
       文字起こし結果をLINEで送信しました。<br>
       トークをご確認ください。
     </div>
-    <button class="action-btn action-btn-primary" id="new-scan-btn">新しくスキャン</button>
+    <div class="complete-buttons">
+      <button class="action-btn action-btn-primary" id="open-line-btn">LINEを開く</button>
+      <button class="action-btn action-btn-secondary" id="new-scan-btn">もう一度スキャン</button>
+    </div>
   </div>
 
   <!-- エラー画面 -->
@@ -648,6 +730,60 @@
       }
       
       showError('カメラの使用許可が必要です', instructions);
+    }
+
+    // ========================================
+    // アルバムから画像選択
+    // ========================================
+    async function selectFromAlbum() {
+      try {
+        debugLog('アルバム選択開始...');
+        
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          debugLog(`ファイル選択: ${file.name}`);
+          
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              
+              originalCanvas = canvas;
+              debugLog(`✅ アルバム画像読込完了: ${canvas.width}x${canvas.height}`);
+              
+              showEditScreen();
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        };
+        
+        input.click();
+      } catch (error) {
+        debugLog(`❌ アルバム選択エラー: ${error.message}`);
+        showError('アルバム選択エラー', 'もう一度お試しください。');
+      }
+    }
+
+    // ========================================
+    // ヘルプページを開く
+    // ========================================
+    function openHelp() {
+      debugLog('ヘルプページを開く');
+      // 仮リンク（実際のヘルプページURLに変更）
+      window.open('https://example.com/help', '_blank');
     }
 
     // ========================================
@@ -1107,7 +1243,9 @@
     // ========================================
     
     // カメラ
+    document.getElementById('album-btn').addEventListener('click', selectFromAlbum);
     document.getElementById('shutter-btn').addEventListener('click', capturePhoto);
+    document.getElementById('help-btn').addEventListener('click', openHelp);
     
     // 編集 - Canvas
     const editCanvas = document.getElementById('edit-canvas');
@@ -1143,6 +1281,15 @@
     document.getElementById('send-btn').addEventListener('click', uploadImage);
     
     // 完了・エラー
+    document.getElementById('open-line-btn').addEventListener('click', () => {
+      debugLog('LINEを開くボタン押下');
+      if (liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        window.location.href = 'https://line.me/R/';
+      }
+    });
+    
     document.getElementById('new-scan-btn').addEventListener('click', () => {
       showScreen('camera-screen');
       if (cameraStream && cameraInitialized) {
