@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>｢アイスタ｣ スキャン</title>
+  <title>「アイスタ」 スキャン</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * {
@@ -442,7 +442,7 @@
     </div>
     
     <div class="camera-controls">
-      <div class="hint">アイスタで解説してほしい問題を撮影しよう！</div>
+      <div class="hint">「アイスタ」で解説して欲しい問題を撮影しよう！</div>
       <div class="camera-buttons">
         <button id="album-btn" class="camera-sub-btn">
           <svg viewBox="0 0 24 24">
@@ -478,7 +478,7 @@
   <!-- 処理中画面 -->
   <div id="processing-screen" class="screen">
     <div class="spinner"></div>
-    <div class="processing-text">文字起こし中...</div>
+    <div class="processing-text">解説を作成しています...</div>
     <div class="processing-hint">20〜40秒ほどお待ちください</div>
   </div>
 
@@ -486,7 +486,7 @@
   <div id="complete-screen" class="screen">
     <div class="complete-title">処理完了</div>
     <div class="complete-message">
-      文字起こし結果をLINEで送信しました。<br>
+      解説をLINEで送信しました。<br>
       トークをご確認ください。
     </div>
     <div class="complete-buttons">
@@ -740,19 +740,9 @@
       try {
         debugLog('アルバム選択開始...');
         
-        // iOSでアルバムのみを開くための工夫
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-        
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        
-        // iOSの場合、capture属性を空文字にすることで
-        // アルバム選択を優先する（環境によって動作が異なる）
-        if (isIOS) {
-          input.setAttribute('capture', '');
-          input.removeAttribute('capture'); // 設定後に削除
-        }
         
         input.onchange = async (e) => {
           const file = e.target.files[0];
@@ -792,17 +782,7 @@
           reader.readAsDataURL(file);
         };
         
-        // inputをDOMに追加してからクリック（一部環境で必要）
-        input.style.display = 'none';
-        document.body.appendChild(input);
         input.click();
-        
-        // クリック後、少し待ってから削除
-        setTimeout(() => {
-          if (input.parentNode) {
-            document.body.removeChild(input);
-          }
-        }, 1000);
         
       } catch (error) {
         debugLog(`❌ アルバム選択エラー: ${error.message}`);
