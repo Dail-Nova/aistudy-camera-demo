@@ -168,6 +168,13 @@
       fill: none;
     }
     
+    .camera-sub-btn.text-icon {
+      color: #fff;
+      font-size: 28px;
+      font-weight: bold;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
     #shutter-btn {
       width: 80px;
       height: 80px;
@@ -445,13 +452,7 @@
           </svg>
         </button>
         <button id="shutter-btn"></button>
-        <button id="help-btn" class="camera-sub-btn">
-          <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <circle cx="12" cy="17" r="0.5"/>
-          </svg>
-        </button>
+        <button id="help-btn" class="camera-sub-btn text-icon">?</button>
       </div>
     </div>
   </div>
@@ -742,11 +743,15 @@
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
+        input.multiple = false; // 単一選択だがカメラオプションを抑制
         // capture属性は指定しない（ライブラリのみ）
         
         input.onchange = async (e) => {
           const file = e.target.files[0];
-          if (!file) return;
+          if (!file) {
+            debugLog('ファイル選択キャンセル');
+            return;
+          }
           
           debugLog(`ファイル選択: ${file.name}`);
           
@@ -766,7 +771,15 @@
               
               showEditScreen();
             };
+            img.onerror = () => {
+              debugLog('❌ 画像読み込みエラー');
+              showError('画像読み込みエラー', '対応している画像形式を選択してください。');
+            };
             img.src = event.target.result;
+          };
+          reader.onerror = () => {
+            debugLog('❌ ファイル読み込みエラー');
+            showError('ファイル読み込みエラー', 'もう一度お試しください。');
           };
           reader.readAsDataURL(file);
         };
