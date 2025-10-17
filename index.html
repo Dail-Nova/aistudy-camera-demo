@@ -435,7 +435,7 @@
 
     // ハンドル設定
     const HANDLE_VISUAL_SIZE = 6;
-    const HANDLE_TAP_AREA = 30;
+    const HANDLE_TAP_AREA = 50;
 
     // 制約値
     const MIN_CROP_SIZE = 50;
@@ -860,7 +860,7 @@
 
     function handleEditPointerDown(e) {
       const isTouch = e.type === 'touchstart';
-      if (!isTouch) setIsMouseDown(true);
+      if (!isTouch) isMouseDown = true;
       
       e.preventDefault();
       
