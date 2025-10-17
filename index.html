@@ -740,11 +740,19 @@
       try {
         debugLog('アルバム選択開始...');
         
+        // iOSでアルバムのみを開くための工夫
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+        
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        input.multiple = false; // 単一選択だがカメラオプションを抑制
-        // capture属性は指定しない（ライブラリのみ）
+        
+        // iOSの場合、capture属性を空文字にすることで
+        // アルバム選択を優先する（環境によって動作が異なる）
+        if (isIOS) {
+          input.setAttribute('capture', '');
+          input.removeAttribute('capture'); // 設定後に削除
+        }
         
         input.onchange = async (e) => {
           const file = e.target.files[0];
@@ -784,7 +792,18 @@
           reader.readAsDataURL(file);
         };
         
+        // inputをDOMに追加してからクリック（一部環境で必要）
+        input.style.display = 'none';
+        document.body.appendChild(input);
         input.click();
+        
+        // クリック後、少し待ってから削除
+        setTimeout(() => {
+          if (input.parentNode) {
+            document.body.removeChild(input);
+          }
+        }, 1000);
+        
       } catch (error) {
         debugLog(`❌ アルバム選択エラー: ${error.message}`);
         showError('アルバム選択エラー', 'もう一度お試しください。');
