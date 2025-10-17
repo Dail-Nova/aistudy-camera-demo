@@ -449,7 +449,7 @@
           <svg viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
+            <circle cx="12" cy="17" r="0.5"/>
           </svg>
         </button>
       </div>
@@ -742,6 +742,7 @@
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
+        // capture属性は指定しない（ライブラリのみ）
         
         input.onchange = async (e) => {
           const file = e.target.files[0];
